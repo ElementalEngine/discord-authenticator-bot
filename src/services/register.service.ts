@@ -1,9 +1,17 @@
 import type { ButtonInteraction, Client, GuildMember, User } from 'discord.js';
 import { ApiClient } from '../api/client.js';
-import type { AccountLookupResponse, RegistrationOperationResponse } from '../api/types.js';
+import type {
+  AccountLookupResponse,
+  RegistrationOperationResponse,
+  RoleIntent,
+} from '../api/types.js';
 import type { SupportedGame } from '../config/types.js';
 import { AuthLogService } from './auth-log.service.js';
 import { RoleSyncService } from './role-sync.service.js';
+
+type RegistrationMode = 'self-service' | 'manual';
+
+type FinalizableOperation = Pick<RegistrationOperationResponse, 'operation_id' | 'game' | 'steam_id' | 'role_intents'>;
 
 export class RegisterService {
   readonly api: ApiClient;
@@ -30,66 +38,32 @@ export class RegisterService {
       discord_user_id: input.interaction.user.id,
     });
 
-    try {
-      const sync = await this.roleSync.applyRoleIntents(input.member, operation.role_intents);
-      await this.api.finalizeRegistrationOperation(operation.operation_id, {
-        result: 'succeeded',
-        applied_role_intents: sync.applied,
-        failure_code: null,
-        failure_message: null,
-      });
-      await this.logs.logRegistrationResult({
-        actorId: input.interaction.user.id,
-        subjectId: input.member.id,
-        game: operation.game,
-        steamId: operation.steam_id,
-        appliedRoleIntents: sync.applied,
-        mode: 'self-service',
-      });
-      return { ...operation, role_intents: sync.applied };
-    } catch (error) {
-      await this.api.finalizeRegistrationOperation(operation.operation_id, {
-        result: 'failed',
-        applied_role_intents: [],
-        failure_code: error instanceof Error ? error.name : 'ROLE_SYNC_FAILED',
-        failure_message: error instanceof Error ? error.message : String(error),
-      }).catch(() => undefined);
-      throw error;
-    }
+    return this.applyAndFinalize({
+      operation,
+      actorId: input.interaction.user.id,
+      subjectId: input.member.id,
+      member: input.member,
+      mode: 'self-service',
+    });
   }
 
-  async addRankRole(input: { userId: string; game: SupportedGame; member: GuildMember }): Promise<RegistrationOperationResponse> {
+  async addRankRole(input: {
+    userId: string;
+    game: SupportedGame;
+    member: GuildMember;
+  }): Promise<RegistrationOperationResponse> {
     const operation = await this.api.requestRankRole({
       discord_user_id: input.userId,
       game: input.game,
     });
 
-    try {
-      const sync = await this.roleSync.applyRoleIntents(input.member, operation.role_intents);
-      await this.api.finalizeRegistrationOperation(operation.operation_id, {
-        result: 'succeeded',
-        applied_role_intents: sync.applied,
-        failure_code: null,
-        failure_message: null,
-      });
-      await this.logs.logRegistrationResult({
-        actorId: input.userId,
-        subjectId: input.member.id,
-        game: operation.game,
-        steamId: operation.steam_id,
-        appliedRoleIntents: sync.applied,
-        mode: 'self-service',
-      });
-      return { ...operation, role_intents: sync.applied };
-    } catch (error) {
-      await this.api.finalizeRegistrationOperation(operation.operation_id, {
-        result: 'failed',
-        applied_role_intents: [],
-        failure_code: error instanceof Error ? error.name : 'ROLE_SYNC_FAILED',
-        failure_message: error instanceof Error ? error.message : String(error),
-      }).catch(() => undefined);
-      throw error;
-    }
+    return this.applyAndFinalize({
+      operation,
+      actorId: input.userId,
+      subjectId: input.member.id,
+      member: input.member,
+      mode: 'self-service',
+    });
   }
 
   async manualRegister(input: {
@@ -108,32 +82,13 @@ export class RegisterService {
       reason: input.reason,
     });
 
-    try {
-      const sync = await this.roleSync.applyRoleIntents(input.member, operation.role_intents);
-      await this.api.finalizeRegistrationOperation(operation.operation_id, {
-        result: 'succeeded',
-        applied_role_intents: sync.applied,
-        failure_code: null,
-        failure_message: null,
-      });
-      await this.logs.logRegistrationResult({
-        actorId: input.actor.id,
-        subjectId: input.subject.id,
-        game: operation.game,
-        steamId: operation.steam_id,
-        appliedRoleIntents: sync.applied,
-        mode: 'manual',
-      });
-      return { ...operation, role_intents: sync.applied };
-    } catch (error) {
-      await this.api.finalizeRegistrationOperation(operation.operation_id, {
-        result: 'failed',
-        applied_role_intents: [],
-        failure_code: error instanceof Error ? error.name : 'ROLE_SYNC_FAILED',
-        failure_message: error instanceof Error ? error.message : String(error),
-      }).catch(() => undefined);
-      throw error;
-    }
+    return this.applyAndFinalize({
+      operation,
+      actorId: input.actor.id,
+      subjectId: input.subject.id,
+      member: input.member,
+      mode: 'manual',
+    });
   }
 
   async lookupByDiscordId(discordId: string): Promise<AccountLookupResponse> {
@@ -142,5 +97,42 @@ export class RegisterService {
 
   async lookupBySteamId(steamId: string): Promise<AccountLookupResponse> {
     return this.api.lookupBySteamId(steamId);
+  }
+
+  private async applyAndFinalize(input: {
+    operation: FinalizableOperation;
+    actorId: string;
+    subjectId: string;
+    member: GuildMember;
+    mode: RegistrationMode;
+  }): Promise<RegistrationOperationResponse> {
+    try {
+      const sync = await this.roleSync.applyRoleIntents(input.member, input.operation.role_intents);
+      await this.api.finalizeRegistrationOperation(input.operation.operation_id, {
+        result: 'succeeded',
+        applied_role_intents: sync.applied,
+        failure_code: null,
+        failure_message: null,
+      });
+      await this.logs.logRegistrationResult({
+        actorId: input.actorId,
+        subjectId: input.subjectId,
+        game: input.operation.game,
+        steamId: input.operation.steam_id,
+        appliedRoleIntents: sync.applied,
+        mode: input.mode,
+      });
+      return { ...input.operation, role_intents: sync.applied };
+    } catch (error) {
+      await this.api
+        .finalizeRegistrationOperation(input.operation.operation_id, {
+          result: 'failed',
+          applied_role_intents: [],
+          failure_code: error instanceof Error ? error.name : 'ROLE_SYNC_FAILED',
+          failure_message: error instanceof Error ? error.message : String(error),
+        })
+        .catch(() => undefined);
+      throw error;
+    }
   }
 }
