@@ -3,7 +3,6 @@ import { ApiClient } from '../api/client.js';
 import type {
   AccountLookupResponse,
   RegistrationOperationResponse,
-  RoleIntent,
 } from '../api/types.js';
 import type { SupportedGame } from '../config/types.js';
 import { AuthLogService } from './auth-log.service.js';
@@ -11,7 +10,10 @@ import { RoleSyncService } from './role-sync.service.js';
 
 type RegistrationMode = 'self-service' | 'manual';
 
-type FinalizableOperation = Pick<RegistrationOperationResponse, 'operation_id' | 'game' | 'steam_id' | 'role_intents'>;
+type FinalizableOperation = Pick<
+  RegistrationOperationResponse,
+  'operation_id' | 'discord_user_id' | 'game' | 'steam_id' | 'role_intents'
+>;
 
 export class RegisterService {
   readonly api: ApiClient;
