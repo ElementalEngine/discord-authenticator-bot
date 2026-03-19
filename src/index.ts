@@ -1,19 +1,37 @@
-import mongoose from 'mongoose'
-import { config } from './config/index.js'
-import discordClient from './discord/client.js'
-import app from './server.js'
+import client, { initClient } from './client.js';
+import { config } from './config/index.js';
 
-discordClient.login(config.discord.token)
-
-mongoose
-  .connect(config.mongoDb)
-  .then(() => console.log('Connected to Database'))
-  .catch(err => { throw err })
-
-app.listen(
-  config.port,
-  ['127.0.0.1', 'localhost'].includes(config.host) ? config.host : '0.0.0.0',
-  () => {
-    console.log(`Server running at http://${config.host}:${config.port}/`)
+async function main(): Promise<void> {
+  try {
+    console.log(`⚙️ Starting auth bot in ${config.env} mode...`);
+    await initClient();
+    await client.login(config.discord.token);
+  } catch (error) {
+    console.error('Fatal error starting auth bot:', error);
+    process.exit(1);
   }
-)
+}
+
+void main();
+
+async function shutdown(signal: NodeJS.Signals): Promise<void> {
+  try {
+    console.log(`🛑 Received ${signal}. Shutting down...`);
+    client.destroy();
+    process.exit(0);
+  } catch (error) {
+    console.error('Error during shutdown:', error);
+    process.exit(1);
+  }
+}
+
+process.once('SIGINT', () => void shutdown('SIGINT'));
+process.once('SIGTERM', () => void shutdown('SIGTERM'));
+
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled promise rejection:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught exception:', error);
+});

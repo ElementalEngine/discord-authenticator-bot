@@ -1,67 +1,76 @@
-import cors, { CorsOptions } from 'cors';
-import { config as env } from 'dotenv';
+import { config as loadEnv } from 'dotenv';
 import path from 'node:path';
-import { SteamConfig } from '../util/types';
+import process from 'node:process';
+import type { AuthBotConfig, NodeEnv } from './types.js';
 
-env({ path: path.resolve('./.env') });
+function parseNodeEnv(raw: string | undefined): NodeEnv {
+  switch (raw) {
+    case 'development':
+    case 'test':
+    case 'production':
+      return raw;
+    case undefined:
+    case '':
+      return 'development';
+    default:
+      throw new Error(`Unsupported NODE_ENV: ${raw}`);
+  }
+}
 
-const corsOptions: CorsOptions = {
-  origin: process.env.CORS ?? '*',
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-  credentials: true,
-  exposedHeaders: ['x-auth-token'],
-};
+const nodeEnv = parseNodeEnv(process.env.NODE_ENV);
+const envPath = path.resolve(`.env.${nodeEnv}`);
 
-const discord = {
-  clientId: process.env.BOT_CLIENT_ID ?? '',
-  token: process.env.BOT_TOKEN ?? '',
-  clientSecret: process.env.BOT_CLIENT_SECRET ?? '',
-  guildId: process.env.DISCORD_GUILD_ID ?? '',
-  channels: {
-    welcome: process.env.CHANNEL_WELCOME_ID!,
-    channel_list: process.env.CHANNEL_LIST_ID!,
-    faq: process.env.CHANNEL_FAQ_ID!,
-    info_hub: process.env.CHANNEL_INFORMATION_HUB_ID!,
-    auth_log: process.env.CHANNEL_AUTHBOT_LOG_ID!,
-    reg_log: process.env.CHANNEL_AUTHBOT_REG_ID!,
-    commands_civ6: process.env.CHANNEL_COMMANDS_CIV6_ID!,
-    commands_civ7: process.env.CHANNEL_COMMANDS_CIV7_ID!,
-    bot_commands: process.env.CHANNEL_BOT_COMMANDS_ID!,
+loadEnv({ path: envPath, override: false });
+
+function required(name: string): string {
+  const value = process.env[name]?.trim();
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
+function optional(name: string): string | undefined {
+  const value = process.env[name]?.trim();
+  return value ? value : undefined;
+}
+
+function positiveInt(name: string, fallback: number): number {
+  const raw = process.env[name]?.trim();
+  if (!raw) return fallback;
+  const value = Number.parseInt(raw, 10);
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error(`Environment variable ${name} must be a positive integer.`);
+  }
+  return value;
+}
+
+export const config: AuthBotConfig = {
+  env: nodeEnv,
+  requestTimeoutMs: positiveInt('REQUEST_TIMEOUT_MS', 10_000),
+  backend: {
+    baseUrl: required('BACKEND_BASE_URL').replace(/\/+$/, ''),
+    serviceToken: required('BACKEND_SERVICE_TOKEN'),
   },
-  roles: {
-    moderator: process.env.ROLE_MODERATOR!,
-    Civ6Rank: process.env.ROLE_CIV6!,
-    Civ7Rank: process.env.ROLE_CIV7!,
-    novice: process.env.ROLE_NOVICE!,
-    non_verified: process.env.ROLE_NON_VERIFIED!,
-    manually_verify: process.env.ROLE_MANUALLY_VERIFY!,
+  discord: {
+    token: required('BOT_TOKEN'),
+    clientId: required('BOT_CLIENT_ID'),
+    guildId: required('DISCORD_GUILD_ID'),
+    channels: {
+      welcome: required('CHANNEL_WELCOME_ID'),
+      civ6Commands: required('CHANNEL_COMMANDS_CIV6_ID'),
+      civ7Commands: required('CHANNEL_COMMANDS_CIV7_ID'),
+      botCommands: required('CHANNEL_BOT_COMMANDS_ID'),
+      authLog: required('CHANNEL_AUTHBOT_LOG_ID'),
+      registrationLog: required('CHANNEL_AUTHBOT_REG_ID'),
+    },
+    roles: {
+      moderator: required('ROLE_MODERATOR'),
+      developer: optional('ROLE_DEVELOPER'),
+      civ6Rank: required('ROLE_CIV6'),
+      civ7Rank: required('ROLE_CIV7'),
+      novice: required('ROLE_NOVICE'),
+      nonVerified: required('ROLE_NON_VERIFIED'),
+    },
   },
-};
-
-export const steam: SteamConfig = {
-  apiKey: process.env.STEAM_API_KEY ?? '',
-  partnerApiKey: process.env.STEAM_PARTNER_API_KEY ?? '',
-  gameIdCiv6: 289070,
-  playTimeCiv6: 2880,
-  gameIdCiv7: 1295660,
-  playTimeCiv7: 120,
-};
-
-export const config = {
-  oauth: [
-    `https://discord.com/api/oauth2/authorize`,
-    `?client_id=${discord.clientId}`,
-    `&redirect_uri=${encodeURIComponent(
-    `http://${process.env.HOST!}:${process.env.PORT!}/auth/callback`
-    )}`,
-    `&response_type=code`,
-    `&scope=identify%20connections`,
-    `&state=`
-  ].join(''),
-  cors: corsOptions,
-  discord,
-  host: process.env.HOST!,
-  port: Number(process.env.PORT!),
-  steam,
-  mongoDb: process.env.MONGO_URL!,
 };

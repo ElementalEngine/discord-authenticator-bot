@@ -1,25 +1,27 @@
 {
-  "ts-node": {
-    "transpileOnly": true,
-    "compilerOptions": {
-      "module": "ESNext"
-    }
-  },
   "compilerOptions": {
-    "lib": ["ESNext"],
-    "module": "ESNext",
-    "esModuleInterop": true,
-    "target": "ESNext",
-    "noImplicitAny": true,
-    "moduleResolution": "Node",
-    "sourceMap": true,
-    "outDir": "dist",
-    "baseUrl": "./",
-    "paths": {
-      "*": ["node_modules/*"]
-    },
-    "forceConsistentCasingInFileNames": true,
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "verbatimModuleSyntax": true,
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "resolveJsonModule": true,
+    "types": ["node"],
     "strict": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
+    "isolatedModules": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "noEmitOnError": true
   },
-  "include": ["./**/*"]
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
 }
