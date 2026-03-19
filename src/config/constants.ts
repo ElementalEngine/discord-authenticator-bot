@@ -1,4 +1,4 @@
-import type { CommandAccessPolicy, SupportedGame } from './types.js';
+import type { SupportedGame } from './types.js';
 
 export const COMMAND_NAMES = {
   register: 'register',
@@ -39,9 +39,3 @@ export const EMOJIS = {
   error: '❌',
   info: 'ℹ️',
 } as const;
-
-export const ACCOUNT_LOOKUP_POLICY: CommandAccessPolicy = {
-  allowedChannelIds: [],
-  requiredRoleIds: [],
-  allowDeveloperOverride: true,
-};

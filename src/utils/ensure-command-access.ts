@@ -1,6 +1,6 @@
 import { MessageFlags, type ChatInputCommandInteraction } from 'discord.js';
 import { config } from '../config/index.js';
-import type { CommandAccessPolicy } from './types.js';
+import type { CommandAccessPolicy } from '../config/types.js';
 
 const SNOWFLAKE_RE = /^\d{17,20}$/;
 

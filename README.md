@@ -23,15 +23,6 @@ This bot expects the backend auth feature to expose:
 - `GET /api/v1/auth/admin/accounts/discord/{discordId}`
 - `GET /api/v1/auth/admin/accounts/steam/{steamId}`
 
-## Scripts
-
-- `npm run dev`
-- `npm run typecheck`
-- `npm run build`
-- `npm run deploy`
-- `npm run verify`
-
-
 ## Environment files
 
 - `.env.development` for local/dev runs
