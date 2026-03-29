@@ -1,8 +1,9 @@
-import type { ButtonInteraction, Client, GuildMember, User } from 'discord.js';
+import type { Client, GuildMember, User } from 'discord.js';
 import { ApiClient } from '../api/client.js';
 import type {
   AccountLookupResponse,
   RegistrationOperationResponse,
+  RegistrationSessionStatusResponse,
 } from '../api/types.js';
 import type { SupportedGame } from '../config/types.js';
 import { AuthLogService } from './auth-log.service.js';
@@ -30,22 +31,24 @@ export class RegisterService {
     return this.api.createRegistrationSession({ discord_user_id: discordUserId, game });
   }
 
-  async completeRegistration(input: {
-    interaction: ButtonInteraction;
+  async completeSelfServiceRegistration(input: {
     sessionId: string;
+    discordUserId: string;
     member: GuildMember;
+    validatedSession?: RegistrationSessionStatusResponse;
   }): Promise<RegistrationOperationResponse> {
     const operation = await this.api.completeRegistrationSession({
       sessionId: input.sessionId,
-      discord_user_id: input.interaction.user.id,
+      discord_user_id: input.discordUserId,
     });
 
     return this.applyAndFinalize({
       operation,
-      actorId: input.interaction.user.id,
+      actorId: input.discordUserId,
       subjectId: input.member.id,
       member: input.member,
       mode: 'self-service',
+      validatedSession: input.validatedSession,
     });
   }
 
@@ -107,6 +110,7 @@ export class RegisterService {
     subjectId: string;
     member: GuildMember;
     mode: RegistrationMode;
+    validatedSession?: RegistrationSessionStatusResponse;
   }): Promise<RegistrationOperationResponse> {
     try {
       const sync = await this.roleSync.applyRoleIntents(input.member, input.operation.role_intents);
@@ -121,8 +125,11 @@ export class RegisterService {
         subjectId: input.subjectId,
         game: input.operation.game,
         steamId: input.operation.steam_id,
+        steamName: input.validatedSession?.linked_account_name,
         appliedRoleIntents: sync.applied,
         mode: input.mode,
+        usernameSnapshot: input.validatedSession?.oauth_username_snapshot ?? null,
+        displayNameSnapshot: input.validatedSession?.oauth_display_name_snapshot ?? null,
       });
       return { ...input.operation, role_intents: sync.applied };
     } catch (error) {

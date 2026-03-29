@@ -6,6 +6,7 @@ import { buildRegistrationButtons } from '../../ui/components/register.js';
 import { toUserErrorMessage } from '../../utils/error-message.js';
 import type { RegisterService } from '../../services/register.service.js';
 import { config } from '../../config/index.js';
+import { startRegistrationSessionWatch } from '../../services/registration-session-watch.service.js';
 
 export function buildBeginSubcommand(): SlashCommandSubcommandBuilder {
   return new SlashCommandSubcommandBuilder()
@@ -50,13 +51,20 @@ export async function executeBeginSubcommand(
     return;
   }
 
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   try {
     const session = await services.createRegistrationSession(interaction.user.id, game);
     await interaction.editReply({
       embeds: [buildRegistrationStartEmbed({ game, expiresAt: session.expires_at })],
       components: [buildRegistrationButtons({ authorizeUrl: session.authorize_url, sessionId: session.session_id })],
+    });
+    startRegistrationSessionWatch({
+      sessionId: session.session_id,
+      expiresAt: session.expires_at,
+      interaction,
+      member: interaction.member,
+      services,
     });
   } catch (error) {
     await interaction.editReply({ content: toUserErrorMessage(error) });

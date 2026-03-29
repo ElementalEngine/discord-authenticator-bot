@@ -27,9 +27,20 @@ export interface RegistrationSessionResponse {
 export interface RegistrationSessionStatusResponse {
   session_id: string;
   status: RegistrationSessionStatus;
-  expires_at?: string;
+  game?: SupportedGame;
+  platform?: string;
+  expires_at?: string | null;
+  linked_account_id?: string | null;
+  linked_account_name?: string | null;
+  oauth_username_snapshot?: string | null;
+  oauth_display_name_snapshot?: string | null;
+  oauth_locale?: string | null;
+  oauth_verified?: boolean | null;
+  oauth_mfa_enabled?: boolean | null;
+  oauth_premium_type?: number | null;
   failure_code?: string | null;
   failure_message?: string | null;
+  details?: Record<string, unknown>;
 }
 
 export type RoleIntent =

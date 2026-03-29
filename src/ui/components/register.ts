@@ -11,10 +11,6 @@ export function buildRegistrationButtons(input: {
       .setStyle(ButtonStyle.Link)
       .setURL(input.authorizeUrl),
     new ButtonBuilder()
-      .setCustomId(`${BUTTON_IDS.registrationFinishPrefix}${input.sessionId}`)
-      .setLabel('Finish registration')
-      .setStyle(ButtonStyle.Success),
-    new ButtonBuilder()
       .setCustomId(`${BUTTON_IDS.registrationCancelPrefix}${input.sessionId}`)
       .setLabel('Cancel')
       .setStyle(ButtonStyle.Secondary),
