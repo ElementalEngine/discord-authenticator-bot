@@ -3,6 +3,7 @@ import { ApiClient } from '../api/client.js';
 import type {
   AccountLookupResponse,
   RegistrationOperationResponse,
+  RegistrationPlatform,
   RegistrationSessionStatusResponse,
 } from '../api/types.js';
 import type { SupportedGame } from '../config/types.js';
@@ -13,7 +14,15 @@ type RegistrationMode = 'self-service' | 'manual' | 'rank-role';
 
 type FinalizableOperation = Pick<
   RegistrationOperationResponse,
-  'operation_id' | 'discord_user_id' | 'game' | 'steam_id' | 'steam_name' | 'role_intents'
+  | 'operation_id'
+  | 'discord_user_id'
+  | 'game'
+  | 'steam_id'
+  | 'steam_name'
+  | 'linked_platform'
+  | 'linked_account_id'
+  | 'linked_account_name'
+  | 'role_intents'
 >;
 
 export class RegisterService {
@@ -74,13 +83,15 @@ export class RegisterService {
     subject: User;
     member: GuildMember;
     game: SupportedGame;
-    steamId: string;
+    platform: RegistrationPlatform;
+    accountId: string;
     reason: string;
   }): Promise<RegistrationOperationResponse> {
     const operation = await this.api.manualRegister({
       actor_discord_id: input.actor.id,
       subject_discord_id: input.subject.id,
-      steam_id: input.steamId,
+      platform: input.platform,
+      account_id: input.accountId,
       game: input.game,
       reason: input.reason,
     });
@@ -139,14 +150,19 @@ export class RegisterService {
         failure_message: null,
       });
 
+      const linkedPlatform = input.operation.linked_platform ?? 'steam';
+      const linkedAccountId = input.operation.linked_account_id ?? input.operation.steam_id;
+      const linkedAccountName = input.operation.linked_account_name ?? input.operation.steam_name ?? null;
+
       if (input.mode === 'manual') {
         await this.logs.logManualRegistrationCompleted({
           actorId: input.actor.id,
           subjectId: input.subject.id,
           discordDisplayName: input.member.displayName,
           discordUsername: input.subject.username,
-          steamId: input.operation.steam_id,
-          steamName: input.operation.steam_name ?? null,
+          linkedPlatform,
+          accountId: linkedAccountId,
+          accountName: linkedAccountName,
           game: input.operation.game,
           reason: input.manualReason ?? 'No reason provided.',
         });
@@ -157,8 +173,9 @@ export class RegisterService {
           discordDisplayName: input.member.displayName,
           discordUsername: input.subject.username,
           game: input.operation.game,
-          steamId: input.operation.steam_id,
-          steamName: input.operation.steam_name ?? null,
+          linkedPlatform,
+          accountId: linkedAccountId,
+          accountName: linkedAccountName,
           appliedRoleIntents: sync.applied,
           mode: 'manual',
         });
@@ -178,14 +195,21 @@ export class RegisterService {
           discordDisplayName: input.member.displayName,
           discordUsername: input.subject.username,
           game: input.operation.game,
-          steamId: input.operation.steam_id,
-          steamName: input.operation.steam_name ?? null,
+          linkedPlatform,
+          accountId: linkedAccountId,
+          accountName: linkedAccountName,
           appliedRoleIntents: sync.applied,
           mode: 'self-service',
         });
       }
 
-      return { ...input.operation, role_intents: sync.applied };
+      return {
+        ...input.operation,
+        linked_platform: linkedPlatform,
+        linked_account_id: linkedAccountId,
+        linked_account_name: linkedAccountName,
+        role_intents: sync.applied,
+      };
     } catch (error) {
       await this.api
         .finalizeRegistrationOperation(input.operation.operation_id, {

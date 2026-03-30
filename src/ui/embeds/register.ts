@@ -1,12 +1,13 @@
 import { EmbedBuilder } from 'discord.js';
-import type { AccountLookupResponse, RoleIntent } from '../../api/types.js';
+import type { AccountLookupResponse, RegistrationPlatform, RoleIntent } from '../../api/types.js';
 import { config } from '../../config/index.js';
 import type { SupportedGame } from '../../config/types.js';
 import {
   formatDiscordAccountBlock,
   formatGameLabel,
   formatRoleUpdateLines,
-  formatSteamAccountBlock,
+  formatLinkedAccountBlock,
+  formatLinkedAccountHeading,
   toLookupDiscordFields,
   toLookupSteamFields,
 } from '../formatters/registration-display.js';
@@ -79,7 +80,7 @@ export function buildRegistrationSuccessEmbed(input: {
       },
       {
         name: 'Steam account',
-        value: formatSteamAccountBlock({ username: input.steamName, steamId: input.steamId }),
+        value: formatLinkedAccountBlock({ platform: 'steam', username: input.steamName, accountId: input.steamId }),
       },
       { name: 'Game', value: formatGameLabel(input.game) },
       { name: 'Discord role updates', value: formatRoleUpdateLines(input.roleIntents) },
@@ -92,8 +93,9 @@ export function buildRegistrationSuccessEmbed(input: {
 
 export function buildManualRegistrationSuccessEmbed(input: {
   game: SupportedGame;
-  steamId: string;
-  steamName?: string | null;
+  platform: RegistrationPlatform;
+  accountId: string;
+  accountName?: string | null;
   discordId: string;
   discordUsername?: string | null;
   discordDisplayName?: string | null;
@@ -112,8 +114,8 @@ export function buildManualRegistrationSuccessEmbed(input: {
         }),
       },
       {
-        name: 'Steam account',
-        value: formatSteamAccountBlock({ username: input.steamName, steamId: input.steamId }),
+        name: formatLinkedAccountHeading(input.platform),
+        value: formatLinkedAccountBlock({ platform: input.platform, username: input.accountName, accountId: input.accountId }),
       },
       { name: 'Game', value: formatGameLabel(input.game) },
       { name: 'Discord role updates', value: formatRoleUpdateLines(input.roleIntents) },

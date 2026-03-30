@@ -28,6 +28,12 @@ export const GAME_CHOICES = [
   { name: 'Civilization VII', value: 'civ7' },
 ] as const satisfies ReadonlyArray<{ name: string; value: SupportedGame }>;
 
+export const REGISTRATION_PLATFORM_CHOICES = [
+  { name: 'Steam', value: 'steam' },
+  { name: 'Epic', value: 'epic' },
+  { name: 'Xbox', value: 'xbox' },
+] as const;
+
 export const BUTTON_IDS = {
   registrationFinishPrefix: 'auth:finish:',
   registrationCancelPrefix: 'auth:cancel:',

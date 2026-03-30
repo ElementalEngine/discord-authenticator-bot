@@ -1,4 +1,9 @@
-import type { AccountLookupResponse, AccountRegistrationRecord, RoleIntent } from '../../api/types.js';
+import type {
+  AccountLookupResponse,
+  AccountRegistrationRecord,
+  RegistrationPlatform,
+  RoleIntent,
+} from '../../api/types.js';
 import { ROLE_INTENTS } from '../../config/constants.js';
 import { config } from '../../config/index.js';
 import type { SupportedGame } from '../../config/types.js';
@@ -19,18 +24,44 @@ export function formatDiscordAccountBlock(input: {
   ].join('\n');
 }
 
-export function formatSteamAccountBlock(input: {
+export function formatLinkedAccountHeading(platform?: RegistrationPlatform | null): string {
+  switch (platform) {
+    case 'epic':
+      return 'Epic account';
+    case 'xbox':
+      return 'Xbox account';
+    case 'steam':
+    default:
+      return 'Steam account';
+  }
+}
+
+export function formatLinkedAccountEmpty(platform?: RegistrationPlatform | null): string {
+  switch (platform) {
+    case 'epic':
+      return 'No linked Epic account found.';
+    case 'xbox':
+      return 'No linked Xbox account found.';
+    case 'steam':
+    default:
+      return 'No linked Steam account found.';
+  }
+}
+
+export function formatLinkedAccountBlock(input: {
+  platform?: RegistrationPlatform | null;
   username?: string | null;
-  steamId?: string | null;
+  accountId?: string | null;
   emptyMessage?: string;
 }): string {
-  if (!input.steamId) {
-    return input.emptyMessage ?? 'No linked Steam account found.';
+  if (!input.accountId) {
+    return input.emptyMessage ?? formatLinkedAccountEmpty(input.platform);
   }
 
+  const idLabel = input.platform === 'epic' ? 'Epic ID' : input.platform === 'xbox' ? 'Xbox ID' : 'Steam ID';
   return [
     `Username: ${formatSearchable(input.username)}`,
-    `Steam ID: ${formatSearchable(input.steamId)}`,
+    `${idLabel}: ${formatSearchable(input.accountId)}`,
   ].join('\n');
 }
 
@@ -53,6 +84,7 @@ export function formatRegistrationLines(
 }
 
 export function toLookupDiscordFields(account: AccountLookupResponse): Array<{ name: string; value: string; inline?: boolean }> {
+  const platform = account.linked_platform ?? (account.steam_id ? 'steam' : null);
   return [
     {
       name: 'Discord account',
@@ -63,11 +95,12 @@ export function toLookupDiscordFields(account: AccountLookupResponse): Array<{ n
       }),
     },
     {
-      name: 'Linked Steam account',
-      value: formatSteamAccountBlock({
-        username: account.steam_name,
-        steamId: account.steam_id,
-        emptyMessage: 'No linked Steam account found.',
+      name: `Linked ${formatLinkedAccountHeading(platform)}`,
+      value: formatLinkedAccountBlock({
+        platform,
+        username: account.linked_account_name ?? account.steam_name,
+        accountId: account.linked_account_id ?? account.steam_id,
+        emptyMessage: formatLinkedAccountEmpty(platform),
       }),
     },
     {
@@ -78,13 +111,15 @@ export function toLookupDiscordFields(account: AccountLookupResponse): Array<{ n
 }
 
 export function toLookupSteamFields(account: AccountLookupResponse): Array<{ name: string; value: string; inline?: boolean }> {
+  const platform = account.linked_platform ?? (account.steam_id ? 'steam' : null);
   return [
     {
-      name: 'Steam account',
-      value: formatSteamAccountBlock({
-        username: account.steam_name,
-        steamId: account.steam_id,
-        emptyMessage: 'No Steam account found.',
+      name: formatLinkedAccountHeading(platform),
+      value: formatLinkedAccountBlock({
+        platform,
+        username: account.linked_account_name ?? account.steam_name,
+        accountId: account.linked_account_id ?? account.steam_id,
+        emptyMessage: 'No linked account found.',
       }),
     },
     {

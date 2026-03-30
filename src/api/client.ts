@@ -6,6 +6,7 @@ import type {
   ApiErrorEnvelope,
   FinalizeOperationRequest,
   RegistrationOperationResponse,
+  RegistrationPlatform,
   RegistrationSessionResponse,
   RegistrationSessionStatusResponse,
 } from './types.js';
@@ -86,7 +87,8 @@ export class ApiClient {
   async manualRegister(input: {
     actor_discord_id: string;
     subject_discord_id: string;
-    steam_id: string;
+    platform: RegistrationPlatform;
+    account_id: string;
     game: SupportedGame;
     reason: string;
   }): Promise<RegistrationOperationResponse> {

@@ -29,6 +29,7 @@ export function toUserErrorMessage(error: unknown): string {
       case 'ALREADY_REGISTERED':
       case 'STEAM_ID_CONFLICT':
       case 'DISCORD_ID_CONFLICT':
+      case 'LINKED_ACCOUNT_CONFLICT':
       case 'RANK_ROLE_NOT_ELIGIBLE':
       case 'ACCOUNT_NOT_FOUND':
       case 'MANUAL_REGISTRATION_INVALID':

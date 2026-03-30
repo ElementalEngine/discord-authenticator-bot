@@ -1,13 +1,14 @@
 import { EmbedBuilder, type Client } from 'discord.js';
-import type { RoleIntent } from '../api/types.js';
+import type { RegistrationPlatform, RoleIntent } from '../api/types.js';
 import { config } from '../config/index.js';
 import type { SupportedGame } from '../config/types.js';
 import { toSystemErrorSummary } from '../utils/error-message.js';
 import {
   formatDiscordAccountBlock,
   formatGameLabel,
+  formatLinkedAccountBlock,
+  formatLinkedAccountHeading,
   formatRoleUpdateLines,
-  formatSteamAccountBlock,
 } from '../ui/formatters/registration-display.js';
 
 export class AuthLogService {
@@ -46,7 +47,7 @@ export class AuthLogService {
         {
           name: 'Steam',
           value: [
-            formatSteamAccountBlock({ username: input.steamName, steamId: input.steamId }),
+            formatLinkedAccountBlock({ platform: 'steam', username: input.steamName, accountId: input.steamId }),
             `Game: ${formatGameLabel(input.game)}`,
           ].join('\n'),
         },
@@ -60,8 +61,9 @@ export class AuthLogService {
     subjectId: string;
     discordDisplayName?: string | null;
     discordUsername?: string | null;
-    steamId: string;
-    steamName?: string | null;
+    linkedPlatform: RegistrationPlatform;
+    accountId: string;
+    accountName?: string | null;
     game: SupportedGame;
     reason: string;
   }): Promise<void> {
@@ -80,18 +82,15 @@ export class AuthLogService {
           }),
         },
         {
-          name: 'Steam',
+          name: formatLinkedAccountHeading(input.linkedPlatform),
           value: [
-            formatSteamAccountBlock({ username: input.steamName, steamId: input.steamId }),
+            formatLinkedAccountBlock({ platform: input.linkedPlatform, username: input.accountName, accountId: input.accountId }),
             `Game: ${formatGameLabel(input.game)}`,
           ].join('\n'),
         },
         {
           name: 'Action',
-          value: [
-            `Performed by: <@${input.actorId}>`,
-            `Reason: ${input.reason}`,
-          ].join('\n'),
+          value: [`Performed by: <@${input.actorId}>`, `Reason: ${input.reason}`].join('\n'),
         },
       );
 
@@ -104,8 +103,9 @@ export class AuthLogService {
     discordDisplayName?: string | null;
     discordUsername?: string | null;
     game: SupportedGame;
-    steamId: string;
-    steamName?: string | null;
+    linkedPlatform: RegistrationPlatform;
+    accountId: string;
+    accountName?: string | null;
     appliedRoleIntents: readonly RoleIntent[];
     mode: 'self-service' | 'manual';
   }): Promise<void> {
@@ -124,8 +124,8 @@ export class AuthLogService {
           }),
         },
         {
-          name: 'Steam account',
-          value: formatSteamAccountBlock({ username: input.steamName, steamId: input.steamId }),
+          name: formatLinkedAccountHeading(input.linkedPlatform),
+          value: formatLinkedAccountBlock({ platform: input.linkedPlatform, username: input.accountName, accountId: input.accountId }),
         },
         { name: 'Game', value: formatGameLabel(input.game) },
         { name: 'Discord role updates', value: formatRoleUpdateLines(input.appliedRoleIntents) },

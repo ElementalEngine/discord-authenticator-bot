@@ -1,7 +1,8 @@
 import { MessageFlags, SlashCommandSubcommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
-import { GAME_CHOICES } from '../../config/constants.js';
+import { GAME_CHOICES, REGISTRATION_PLATFORM_CHOICES } from '../../config/constants.js';
 import type { SupportedGame } from '../../config/types.js';
 import { buildManualRegistrationSuccessEmbed } from '../../ui/embeds/register.js';
+import type { RegistrationPlatform } from '../../api/types.js';
 import { toUserErrorMessage } from '../../utils/error-message.js';
 import type { RegisterService } from '../../services/register.service.js';
 
@@ -11,12 +12,19 @@ const STEAM_ID_RE = /^\d{5,20}$/;
 export function buildManualRegisterSubcommand(): SlashCommandSubcommandBuilder {
   return new SlashCommandSubcommandBuilder()
     .setName('manual-register')
-    .setDescription('Create a registration manually for a Discord ID.')
+    .setDescription('Create a manual registration for a Discord ID.')
     .addStringOption((option) => option.setName('discord-id').setDescription('Target Discord ID').setRequired(true))
     .addStringOption((option) =>
       option.setName('game').setDescription('Game to register').setRequired(true).addChoices(...GAME_CHOICES),
     )
-    .addStringOption((option) => option.setName('steam-id').setDescription('Steam account ID').setRequired(true))
+    .addStringOption((option) =>
+      option
+        .setName('platform')
+        .setDescription('Linked platform for this manual registration')
+        .setRequired(true)
+        .addChoices(...REGISTRATION_PLATFORM_CHOICES),
+    )
+    .addStringOption((option) => option.setName('account-id').setDescription('Platform account ID').setRequired(true))
     .addStringOption((option) => option.setName('reason').setDescription('Audit reason').setRequired(true));
 }
 
@@ -26,7 +34,8 @@ export async function executeManualRegisterSubcommand(
 ): Promise<void> {
   const discordId = interaction.options.getString('discord-id', true).trim();
   const game = interaction.options.getString('game', true) as SupportedGame;
-  const steamId = interaction.options.getString('steam-id', true).trim();
+  const platform = interaction.options.getString('platform', true) as RegistrationPlatform;
+  const accountId = interaction.options.getString('account-id', true).trim();
   const reason = interaction.options.getString('reason', true).trim();
 
   if (!DISCORD_ID_RE.test(discordId)) {
@@ -34,8 +43,8 @@ export async function executeManualRegisterSubcommand(
     return;
   }
 
-  if (!STEAM_ID_RE.test(steamId)) {
-    await interaction.reply({ content: 'Steam ID must be numeric.', flags: MessageFlags.Ephemeral });
+  if (platform === 'steam' && !STEAM_ID_RE.test(accountId)) {
+    await interaction.reply({ content: 'Steam account ID must be numeric.', flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -63,7 +72,8 @@ export async function executeManualRegisterSubcommand(
       subject,
       member,
       game,
-      steamId,
+      platform,
+      accountId,
       reason,
     });
 
@@ -71,8 +81,9 @@ export async function executeManualRegisterSubcommand(
       embeds: [
         buildManualRegistrationSuccessEmbed({
           game: result.game,
-          steamId: result.steam_id,
-          steamName: result.steam_name ?? null,
+          platform: result.linked_platform ?? platform,
+          accountId: result.linked_account_id ?? accountId,
+          accountName: result.linked_account_name ?? null,
           discordId: subject.id,
           discordUsername: subject.username,
           discordDisplayName: member.displayName,

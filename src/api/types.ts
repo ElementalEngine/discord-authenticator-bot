@@ -60,6 +60,9 @@ export interface RegistrationOperationResponse {
   discord_user_id: string;
   steam_id: string;
   steam_name?: string | null;
+  linked_platform?: RegistrationPlatform | null;
+  linked_account_id?: string | null;
+  linked_account_name?: string | null;
   game: SupportedGame;
   role_intents: RoleIntent[];
 }
@@ -85,6 +88,9 @@ export interface AccountLookupResponse {
   discord_display_name?: string | null;
   steam_id: string | null;
   steam_name?: string | null;
+  linked_platform?: RegistrationPlatform | null;
+  linked_account_id?: string | null;
+  linked_account_name?: string | null;
   registrations: Partial<Record<SupportedGame, AccountRegistrationRecord>>;
   created_at?: string;
   updated_at?: string;
