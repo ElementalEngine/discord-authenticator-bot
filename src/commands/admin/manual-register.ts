@@ -56,7 +56,14 @@ export async function executeManualRegisterSubcommand(
     });
 
     await interaction.editReply({
-      embeds: [buildRegistrationSuccessEmbed({ game: result.game, steamId: result.steam_id, roleIntents: result.role_intents })],
+      embeds: [buildRegistrationSuccessEmbed({
+            game: result.game,
+            discordId: member.id,
+            discordDisplayName: member.displayName,
+            discordUsername: subject.username,
+            steamId: result.steam_id,
+            roleIntents: result.role_intents,
+          })],
     });
   } catch (error) {
     await interaction.editReply({ content: toUserErrorMessage(error) });

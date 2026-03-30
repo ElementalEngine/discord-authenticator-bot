@@ -7,7 +7,7 @@ export function buildRegistrationButtons(input: {
 }): ActionRowBuilder<ButtonBuilder> {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
-      .setLabel('Authorize')
+      .setLabel('Start Discord verification')
       .setStyle(ButtonStyle.Link)
       .setURL(input.authorizeUrl),
     new ButtonBuilder()

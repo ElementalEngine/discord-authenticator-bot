@@ -34,7 +34,7 @@ export async function handleRegisterInteraction(
         member: interaction.member,
       });
       await safeEditReply(interaction, {
-        embeds: [buildRegistrationSuccessEmbed({ game: result.game, steamId: result.steam_id, roleIntents: result.role_intents })],
+        embeds: [buildRegistrationSuccessEmbed({ game: result.game, discordId: interaction.user.id, discordDisplayName: interaction.member.displayName, discordUsername: interaction.user.username, steamId: result.steam_id, roleIntents: result.role_intents })],
         components: clearComponents(),
       });
     } catch (error) {

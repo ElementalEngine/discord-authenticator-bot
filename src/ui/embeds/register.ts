@@ -1,7 +1,13 @@
 import { EmbedBuilder } from 'discord.js';
 import type { AccountLookupResponse, RoleIntent } from '../../api/types.js';
+import { config } from '../../config/index.js';
 import type { SupportedGame } from '../../config/types.js';
-import { formatAppliedRoleUpdates, formatGameLabel, formatSteamAccount } from '../formatters/registration-display.js';
+import {
+  formatAppliedRoleUpdates,
+  formatDiscordAccount,
+  formatGameLabel,
+  formatSteamAccount,
+} from '../formatters/registration-display.js';
 
 export function buildRegistrationStartEmbed(input: {
   game: SupportedGame;
@@ -10,19 +16,21 @@ export function buildRegistrationStartEmbed(input: {
   return new EmbedBuilder()
     .setTitle('Welcome to CivPlayers Leagues')
     .setDescription(
-      `Before continuing, please read **#rules** and Discord's **Terms of Service**, **Community Guidelines**, and **Partner Code of Conduct**.\n\nClick **Authorize** below to start Discord + Steam verification. This message updates automatically when the checks finish.`,
+      'Read the server rules and Discord\'s **Terms of Service**, **Community Guidelines**, and **Partner Code of Conduct** before you continue.\n\n' +
+        'Use **Start Discord verification** below to begin Discord + Steam verification.\n' +
+        'This message updates automatically when the checks finish. You do **not** need a finish button.',
     )
     .addFields(
       {
-        name: 'Before you register',
+        name: '✅ Before you begin',
         value:
           '**1. Link Steam to Discord**\n' +
           'Settings → Connections → Steam → sign in → enable **Display on profile**\n\n' +
           '**2. Make your Steam profile public**\n' +
           'Steam Community → Profile → Edit Profile → Privacy Settings\n' +
           'Set **Game details** to **Public** and turn off private playtime\n\n' +
-          '**3. Stay on this message**\n' +
-          'Use the **Authorize** button below, complete the browser step, then return here. No extra finish button is needed.',
+          '**3. Finish the browser verification**\n' +
+          'Use the button below, complete the browser step, then return to this message.',
       },
       {
         name: 'Registration',
@@ -33,28 +41,43 @@ export function buildRegistrationStartEmbed(input: {
       {
         name: 'Need help?',
         value:
-          '• Epic Games copy of Civ VI: type `s! egs`\n' +
-          '• Mac users may need a virtual machine\n' +
-          '• Ping **@CPL Staff** in **#commands-unverified**\n' +
-          '• Subscribe to the mods used in most CPL Civ VI games',
+          '• **Epic Games copy of Civ VI?** Type `s! egs`\n' +
+          `• **Need help?** Ask <@&${config.discord.roles.moderator}> in <#${config.discord.channels.welcome}>`,
       },
     );
 }
 
 export function buildRegistrationSuccessEmbed(input: {
   game: SupportedGame;
+  discordId: string;
+  discordDisplayName?: string | null;
+  discordUsername?: string | null;
   steamId: string;
   steamName?: string | null;
   roleIntents: readonly RoleIntent[];
 }): EmbedBuilder {
   return new EmbedBuilder()
     .setTitle('Registration complete')
-    .setDescription('Your account has been verified and your Discord access has been updated successfully.')
+    .setDescription('Your Discord and Steam accounts were verified successfully, and your CPL access has been updated.')
     .addFields(
+      {
+        name: 'Discord account',
+        value: formatDiscordAccount({
+          discordId: input.discordId,
+          displayName: input.discordDisplayName,
+          username: input.discordUsername,
+        }),
+      },
+      {
+        name: 'Steam account',
+        value: formatSteamAccount({ steamId: input.steamId, steamName: input.steamName }),
+      },
       { name: 'Game', value: formatGameLabel(input.game), inline: true },
-      { name: 'Steam account', value: formatSteamAccount({ steamId: input.steamId, steamName: input.steamName }), inline: true },
-      { name: 'Discord updates', value: formatAppliedRoleUpdates(input.roleIntents) },
-      { name: 'Next step', value: 'You can now continue in the normal CPL channels for your game.' },
+      { name: 'Discord role updates', value: formatAppliedRoleUpdates(input.roleIntents) },
+      {
+        name: 'Next step',
+        value: `You're ready to use the normal CPL channels and commands for **${formatGameLabel(input.game)}**.`,
+      },
     );
 }
 

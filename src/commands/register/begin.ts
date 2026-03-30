@@ -1,7 +1,7 @@
 import { SlashCommandSubcommandBuilder, type ChatInputCommandInteraction, MessageFlags } from 'discord.js';
 import { GAME_CHOICES } from '../../config/constants.js';
 import type { SupportedGame } from '../../config/types.js';
-import { buildRegistrationStartEmbed } from '../../ui/embeds/register.js';
+import { buildRegistrationFailureEmbed, buildRegistrationStartEmbed } from '../../ui/embeds/register.js';
 import { buildRegistrationButtons } from '../../ui/components/register.js';
 import { toUserErrorMessage } from '../../utils/error-message.js';
 import type { RegisterService } from '../../services/register.service.js';
@@ -31,6 +31,7 @@ export async function executeBeginSubcommand(
     await interaction.reply({
       content: `Use this command in <#${config.discord.channels.welcome}>.`,
       flags: MessageFlags.Ephemeral,
+      allowedMentions: { parse: [] },
     });
     return;
   }
@@ -39,6 +40,7 @@ export async function executeBeginSubcommand(
     await interaction.reply({
       content: 'Guild member cache is unavailable. Please try again.',
       flags: MessageFlags.Ephemeral,
+      allowedMentions: { parse: [] },
     });
     return;
   }
@@ -47,6 +49,7 @@ export async function executeBeginSubcommand(
     await interaction.reply({
       content: 'Only users with the non-verified role can start registration.',
       flags: MessageFlags.Ephemeral,
+      allowedMentions: { parse: [] },
     });
     return;
   }
@@ -58,6 +61,7 @@ export async function executeBeginSubcommand(
     await interaction.editReply({
       embeds: [buildRegistrationStartEmbed({ game, expiresAt: session.expires_at })],
       components: [buildRegistrationButtons({ authorizeUrl: session.authorize_url, sessionId: session.session_id })],
+      allowedMentions: { parse: [] },
     });
     startRegistrationSessionWatch({
       sessionId: session.session_id,
@@ -67,7 +71,11 @@ export async function executeBeginSubcommand(
       services,
     });
   } catch (error) {
-    await interaction.editReply({ content: toUserErrorMessage(error) });
+    await interaction.editReply({
+      content: null,
+      embeds: [buildRegistrationFailureEmbed({ message: toUserErrorMessage(error) })],
+      allowedMentions: { parse: [] },
+    });
     await services.logs.logSystemError({
       title: 'Registration start failed',
       actorId: interaction.user.id,

@@ -124,6 +124,9 @@ async function watchRegistrationSession(input: WatchInput, state: WatchState): P
             embeds: [
               buildRegistrationSuccessEmbed({
                 game: result.game,
+                discordId: input.interaction.user.id,
+                discordDisplayName: input.member.displayName,
+                discordUsername: input.interaction.user.username,
                 steamId: result.steam_id,
                 steamName: status.linked_account_name,
                 roleIntents: result.role_intents,

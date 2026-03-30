@@ -7,14 +7,32 @@ export function formatGameLabel(game: SupportedGame): string {
   return game === 'civ6' ? 'Civilization VI' : 'Civilization VII';
 }
 
+export function formatDiscordAccount(input: {
+  discordId: string;
+  displayName?: string | null;
+  username?: string | null;
+}): string {
+  const lines: string[] = [];
+  if (input.displayName?.trim()) {
+    lines.push(`Display name: **${escapeMarkdownLite(input.displayName.trim())}**`);
+  }
+  if (input.username?.trim()) {
+    lines.push(`Username: **${escapeMarkdownLite(input.username.trim())}**`);
+  }
+  lines.push(`Discord ID: \`${input.discordId}\``);
+  return lines.join('\n');
+}
+
 export function formatSteamAccount(input: {
   steamId: string;
   steamName?: string | null;
 }): string {
+  const lines: string[] = [];
   if (input.steamName?.trim()) {
-    return `**${escapeMarkdownLite(input.steamName.trim())}**\n\`${input.steamId}\``;
+    lines.push(`Username: **${escapeMarkdownLite(input.steamName.trim())}**`);
   }
-  return `\`${input.steamId}\``;
+  lines.push(`Steam ID: \`${input.steamId}\``);
+  return lines.join('\n');
 }
 
 export function formatAppliedRoleUpdates(intents: readonly RoleIntent[]): string {
@@ -28,9 +46,8 @@ export function extractAuthenticationSnapshot(status: RegistrationSessionStatusR
   locale: string;
   verified: string;
   mfaEnabled: string;
-  nitroStatus: string;
-  email: string;
-  steamAccount: string;
+  steamName: string;
+  steamId: string;
 } {
   return {
     username: status.oauth_username_snapshot ?? 'Unknown',
@@ -38,12 +55,8 @@ export function extractAuthenticationSnapshot(status: RegistrationSessionStatusR
     locale: status.oauth_locale ?? 'Unknown',
     verified: status.oauth_verified == null ? 'Unknown' : status.oauth_verified ? 'Yes' : 'No',
     mfaEnabled: status.oauth_mfa_enabled == null ? 'Unknown' : status.oauth_mfa_enabled ? 'Enabled' : 'Disabled',
-    nitroStatus: formatPremiumType(status.oauth_premium_type),
-    email: 'Not requested by this auth flow',
-    steamAccount: formatSteamAccount({
-      steamId: status.linked_account_id ?? 'Unknown',
-      steamName: status.linked_account_name,
-    }),
+    steamName: status.linked_account_name?.trim() || 'Unknown',
+    steamId: status.linked_account_id ?? 'Unknown',
   };
 }
 
@@ -59,23 +72,6 @@ function roleUpdateLine(intent: RoleIntent): string {
       return `• Removed <@&${config.discord.roles.nonVerified}>`;
     default:
       return `• ${intent}`;
-  }
-}
-
-function formatPremiumType(value: number | null | undefined): string {
-  switch (value) {
-    case 1:
-      return 'Nitro Classic';
-    case 2:
-      return 'Nitro';
-    case 3:
-      return 'Nitro Basic';
-    case 0:
-    case undefined:
-    case null:
-      return 'None';
-    default:
-      return `Code ${value}`;
   }
 }
 
