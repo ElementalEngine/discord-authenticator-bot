@@ -1,7 +1,7 @@
-import type { RoleIntent, RegistrationSessionStatusResponse } from '../api/types.js';
-import { ROLE_INTENTS } from '../config/constants.js';
-import { config } from '../config/index.js';
-import type { SupportedGame } from '../config/types.js';
+import type { RoleIntent, RegistrationSessionStatusResponse } from '../../api/types.js';
+import { ROLE_INTENTS } from '../../config/constants.js';
+import { config } from '../../config/index.js';
+import type { SupportedGame } from '../../config/types.js';
 
 export function formatGameLabel(game: SupportedGame): string {
   return game === 'civ6' ? 'Civilization VI' : 'Civilization VII';
@@ -20,11 +20,6 @@ export function formatSteamAccount(input: {
 export function formatAppliedRoleUpdates(intents: readonly RoleIntent[]): string {
   const lines = intents.map((intent) => roleUpdateLine(intent));
   return lines.join('\n') || 'No Discord role changes were required.';
-}
-
-export function formatIntentSummary(intents: readonly RoleIntent[]): string {
-  const lines = intents.map((intent) => roleIntentLabel(intent));
-  return lines.join('\n') || 'None';
 }
 
 export function extractAuthenticationSnapshot(status: RegistrationSessionStatusResponse): {
@@ -64,21 +59,6 @@ function roleUpdateLine(intent: RoleIntent): string {
       return `• Removed <@&${config.discord.roles.nonVerified}>`;
     default:
       return `• ${intent}`;
-  }
-}
-
-function roleIntentLabel(intent: RoleIntent): string {
-  switch (intent) {
-    case ROLE_INTENTS.grantCiv6Rank:
-      return 'Grant Civ VI rank';
-    case ROLE_INTENTS.grantCiv7Rank:
-      return 'Grant Civ VII rank';
-    case ROLE_INTENTS.grantNovice:
-      return 'Grant novice role';
-    case ROLE_INTENTS.removeNonVerified:
-      return 'Remove non-verified role';
-    default:
-      return intent;
   }
 }
 

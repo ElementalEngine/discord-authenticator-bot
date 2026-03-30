@@ -1,7 +1,8 @@
 import { EmbedBuilder, type Client } from 'discord.js';
 import type { RegistrationSessionStatusResponse, RoleIntent } from '../api/types.js';
 import { config } from '../config/index.js';
-import { extractAuthenticationSnapshot, formatAppliedRoleUpdates, formatGameLabel, formatSteamAccount } from '../utils/registration-display.js';
+import type { SupportedGame } from '../config/types.js';
+import { extractAuthenticationSnapshot, formatAppliedRoleUpdates, formatGameLabel, formatSteamAccount } from '../ui/formatters/registration-display.js';
 import { toSystemErrorSummary } from '../utils/error-message.js';
 
 export class AuthLogService {
@@ -36,7 +37,7 @@ export class AuthLogService {
   async logRegistrationResult(input: {
     actorId: string;
     subjectId: string;
-    game: string;
+    game: SupportedGame;
     steamId: string;
     steamName?: string | null;
     appliedRoleIntents: readonly RoleIntent[];
@@ -57,7 +58,7 @@ export class AuthLogService {
       .addFields(
         { name: 'Member', value: `<@${input.subjectId}>`, inline: true },
         ...(input.actorId !== input.subjectId ? [{ name: 'Completed by', value: `<@${input.actorId}>`, inline: true }] : []),
-        { name: 'Game', value: formatGameLabel(input.game as 'civ6' | 'civ7'), inline: true },
+        { name: 'Game', value: formatGameLabel(input.game), inline: true },
         { name: 'Steam account', value: formatSteamAccount({ steamId: input.steamId, steamName: input.steamName }) },
         {
           name: 'Discord updates',

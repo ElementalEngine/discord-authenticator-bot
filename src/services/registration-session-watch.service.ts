@@ -2,6 +2,7 @@ import { ApiError } from '../api/errors.js';
 import type { RegistrationSessionStatusResponse } from '../api/types.js';
 import type { GuildMember, ChatInputCommandInteraction } from 'discord.js';
 import {
+  buildRegistrationCompletedEmbed,
   buildRegistrationExpiredEmbed,
   buildRegistrationFailureEmbed,
   buildRegistrationSuccessEmbed,
@@ -55,7 +56,7 @@ export function stopRegistrationSessionWatch(sessionId: string): void {
 }
 
 async function watchRegistrationSession(input: WatchInput, state: WatchState): Promise<void> {
-  const deadlineMs = new Date(input.expiresAt).getTime() + WATCH_DEADLINE_GRACE_MS;
+  const deadlineMs = resolveWatchDeadline(input.expiresAt);
   let consecutiveStatusRetries = 0;
   let completionRetries = 0;
 
@@ -77,7 +78,7 @@ async function watchRegistrationSession(input: WatchInput, state: WatchState): P
       status = await input.services.api.getRegistrationSession(input.sessionId);
       consecutiveStatusRetries = 0;
     } catch (error) {
-      if (isStatusRetryable(error)) {
+      if (isRetryableBackendError(error)) {
         consecutiveStatusRetries += 1;
         if (consecutiveStatusRetries <= MAX_CONSECUTIVE_STATUS_RETRIES) {
           continue;
@@ -132,7 +133,7 @@ async function watchRegistrationSession(input: WatchInput, state: WatchState): P
           }).catch(() => undefined);
           return;
         } catch (error) {
-          if (isCompleteRetryable(error) && completionRetries < MAX_COMPLETE_RETRIES) {
+          if (isRetryableBackendError(error) && completionRetries < MAX_COMPLETE_RETRIES) {
             completionRetries += 1;
             continue;
           }
@@ -170,6 +171,11 @@ async function watchRegistrationSession(input: WatchInput, state: WatchState): P
         }).catch(() => undefined);
         return;
       case 'completed':
+        await safeEditReply(input.interaction, {
+          content: null,
+          embeds: [buildRegistrationCompletedEmbed()],
+          components: clearComponents(),
+        }).catch(() => undefined);
         return;
       default:
         return;
@@ -177,12 +183,14 @@ async function watchRegistrationSession(input: WatchInput, state: WatchState): P
   }
 }
 
-function isStatusRetryable(error: unknown): error is ApiError {
+function isRetryableBackendError(error: unknown): error is ApiError {
   return error instanceof ApiError && ['BACKEND_UNAVAILABLE', 'BACKEND_TIMEOUT', 'HTTP_502'].includes(error.code);
 }
 
-function isCompleteRetryable(error: unknown): error is ApiError {
-  return error instanceof ApiError && ['BACKEND_UNAVAILABLE', 'BACKEND_TIMEOUT', 'HTTP_502'].includes(error.code);
+function resolveWatchDeadline(expiresAt: string): number {
+  const parsed = Date.parse(expiresAt);
+  const base = Number.isFinite(parsed) ? parsed : Date.now();
+  return base + WATCH_DEADLINE_GRACE_MS;
 }
 
 function sleep(ms: number): Promise<void> {

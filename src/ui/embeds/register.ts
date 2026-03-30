@@ -1,7 +1,7 @@
 import { EmbedBuilder } from 'discord.js';
 import type { AccountLookupResponse, RoleIntent } from '../../api/types.js';
 import type { SupportedGame } from '../../config/types.js';
-import { formatAppliedRoleUpdates, formatGameLabel, formatSteamAccount } from '../../utils/registration-display.js';
+import { formatAppliedRoleUpdates, formatGameLabel, formatSteamAccount } from '../formatters/registration-display.js';
 
 export function buildRegistrationStartEmbed(input: {
   game: SupportedGame;
@@ -62,6 +62,12 @@ export function buildRegistrationExpiredEmbed(): EmbedBuilder {
   return new EmbedBuilder()
     .setTitle('Registration expired')
     .setDescription('This registration session expired. Run `/register register` to start again with a fresh link.');
+}
+
+export function buildRegistrationCompletedEmbed(): EmbedBuilder {
+  return new EmbedBuilder()
+    .setTitle('Registration already completed')
+    .setDescription('This registration session has already been completed. You can continue in the normal CPL channels for your game.');
 }
 
 export function buildRegistrationFailureEmbed(input: {
