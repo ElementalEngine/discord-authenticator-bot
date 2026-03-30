@@ -1,9 +1,11 @@
-import type { ButtonInteraction, Client } from 'discord.js';
-import { MessageFlags } from 'discord.js';
+import { MessageFlags, type ButtonInteraction, type Client } from 'discord.js';
 import { BUTTON_IDS } from '../config/constants.js';
 import { RegisterService } from '../services/register.service.js';
-import { buildRegistrationSuccessEmbed } from '../ui/embeds/register.js';
-import { stopRegistrationSessionWatch } from '../services/registration-session-watch.service.js';
+import { RegistrationSessionWatchService } from '../services/registration-session-watch.service.js';
+import {
+  buildRegistrationFailureEmbed,
+  buildRegistrationSuccessEmbed,
+} from '../ui/embeds/register.js';
 import { clearComponents } from '../ui/components/register.js';
 import { safeEditReply } from '../utils/discord-safe.js';
 import { toUserErrorMessage } from '../utils/error-message.js';
@@ -18,27 +20,46 @@ export async function handleRegisterInteraction(
   interaction: ButtonInteraction,
   client: Client,
 ): Promise<boolean> {
+  const services = new RegisterService(client);
+  const watchService = new RegistrationSessionWatchService(services);
+
   const finishSessionId = getSessionId(interaction.customId, BUTTON_IDS.registrationFinishPrefix);
   if (finishSessionId) {
     if (!interaction.inCachedGuild()) {
-      await interaction.reply({ content: 'Guild member cache is unavailable. Please try again.', flags: MessageFlags.Ephemeral });
+      await interaction.reply({
+        content: 'Guild member cache is unavailable. Please try again.',
+        flags: MessageFlags.Ephemeral,
+      });
       return true;
     }
 
+    watchService.stop(finishSessionId);
     await interaction.deferUpdate();
-    const services = new RegisterService(client);
     try {
       const result = await services.completeSelfServiceRegistration({
         sessionId: finishSessionId,
-        discordUserId: interaction.user.id,
+        actor: interaction.user,
         member: interaction.member,
       });
       await safeEditReply(interaction, {
-        embeds: [buildRegistrationSuccessEmbed({ game: result.game, discordId: interaction.user.id, discordDisplayName: interaction.member.displayName, discordUsername: interaction.user.username, steamId: result.steam_id, roleIntents: result.role_intents })],
+        embeds: [
+          buildRegistrationSuccessEmbed({
+            game: result.game,
+            steamId: result.steam_id,
+            steamName: result.steam_name ?? null,
+            discordId: interaction.user.id,
+            discordUsername: interaction.user.username,
+            discordDisplayName: interaction.member.displayName,
+            roleIntents: result.role_intents,
+          }),
+        ],
         components: clearComponents(),
       });
     } catch (error) {
-      await safeEditReply(interaction, { content: toUserErrorMessage(error), components: clearComponents() });
+      await safeEditReply(interaction, {
+        embeds: [buildRegistrationFailureEmbed(toUserErrorMessage(error).replace(/^⚠️\s?|^❌\s?/, ''))],
+        components: clearComponents(),
+      });
       await services.logs.logSystemError({
         title: 'Registration completion failed',
         actorId: interaction.user.id,
@@ -51,7 +72,7 @@ export async function handleRegisterInteraction(
 
   const cancelSessionId = getSessionId(interaction.customId, BUTTON_IDS.registrationCancelPrefix);
   if (cancelSessionId) {
-    stopRegistrationSessionWatch(cancelSessionId);
+    watchService.stop(cancelSessionId);
     await interaction.update({
       content: 'Registration flow cancelled. Run `/register register` to start again.',
       embeds: [],

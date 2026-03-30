@@ -17,6 +17,6 @@ export function buildRegistrationButtons(input: {
   );
 }
 
-export function clearComponents() {
+export function clearComponents(): [] {
   return [];
 }

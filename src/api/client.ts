@@ -168,9 +168,7 @@ function tryParseJson(value: string): unknown {
 }
 
 function toApiError(status: number, parsed: unknown): ApiError {
-  const envelope = parsed as Partial<ApiErrorEnvelope> & {
-    detail?: Partial<ApiErrorEnvelope>;
-  } | null;
+  const envelope = parsed as ApiErrorEnvelope | null;
   const error = envelope?.error ?? envelope?.detail?.error;
   if (error?.code && error?.message) {
     return new ApiError({

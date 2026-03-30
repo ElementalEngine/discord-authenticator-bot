@@ -1,5 +1,7 @@
 import type { SupportedGame } from '../config/types.js';
 
+export type RegistrationPlatform = 'steam' | 'epic' | 'xbox';
+
 export type RegistrationSessionStatus =
   | 'pending_auth'
   | 'validating'
@@ -8,13 +10,18 @@ export type RegistrationSessionStatus =
   | 'expired'
   | 'completed';
 
+export interface ApiErrorPayload {
+  code: string;
+  message: string;
+  details?: unknown;
+  retryable?: boolean;
+  correlation_id?: string;
+}
+
 export interface ApiErrorEnvelope {
-  error: {
-    code: string;
-    message: string;
-    details?: unknown;
-    retryable?: boolean;
-    correlation_id?: string;
+  error?: ApiErrorPayload;
+  detail?: {
+    error?: ApiErrorPayload;
   };
 }
 
@@ -27,20 +34,18 @@ export interface RegistrationSessionResponse {
 export interface RegistrationSessionStatusResponse {
   session_id: string;
   status: RegistrationSessionStatus;
-  game?: SupportedGame;
-  platform?: string;
-  expires_at?: string | null;
-  linked_account_id?: string | null;
-  linked_account_name?: string | null;
-  oauth_username_snapshot?: string | null;
-  oauth_display_name_snapshot?: string | null;
-  oauth_locale?: string | null;
-  oauth_verified?: boolean | null;
-  oauth_mfa_enabled?: boolean | null;
-  oauth_premium_type?: number | null;
+  expires_at?: string;
   failure_code?: string | null;
   failure_message?: string | null;
-  details?: Record<string, unknown>;
+  game?: SupportedGame | null;
+  platform?: RegistrationPlatform | null;
+  linked_account_id?: string | null;
+  linked_account_name?: string | null;
+  discord_username?: string | null;
+  discord_display_name?: string | null;
+  discord_locale?: string | null;
+  discord_verified?: boolean | null;
+  discord_mfa_enabled?: boolean | null;
 }
 
 export type RoleIntent =
@@ -54,6 +59,7 @@ export interface RegistrationOperationResponse {
   status?: string;
   discord_user_id: string;
   steam_id: string;
+  steam_name?: string | null;
   game: SupportedGame;
   role_intents: RoleIntent[];
 }
@@ -75,9 +81,10 @@ export interface AccountRegistrationRecord {
 
 export interface AccountLookupResponse {
   discord_id: string;
+  discord_username?: string | null;
+  discord_display_name?: string | null;
   steam_id: string | null;
-  username_snapshot: string | null;
-  display_name_snapshot: string | null;
+  steam_name?: string | null;
   registrations: Partial<Record<SupportedGame, AccountRegistrationRecord>>;
   created_at?: string;
   updated_at?: string;

@@ -1,4 +1,4 @@
-import { SlashCommandSubcommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
+import { MessageFlags, SlashCommandSubcommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
 import { buildLookupEmbed } from '../../ui/embeds/register.js';
 import { toUserErrorMessage } from '../../utils/error-message.js';
 import type { RegisterService } from '../../services/register.service.js';
@@ -18,14 +18,14 @@ export async function executeLookupSteamSubcommand(
 ): Promise<void> {
   const steamId = interaction.options.getString('steam-id', true).trim();
   if (!STEAM_ID_RE.test(steamId)) {
-    await interaction.reply({ content: 'Steam ID must be numeric.', ephemeral: true });
+    await interaction.reply({ content: 'Steam ID must be numeric.', flags: MessageFlags.Ephemeral });
     return;
   }
 
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
   try {
     const account = await services.lookupBySteamId(steamId);
-    await interaction.editReply({ embeds: [buildLookupEmbed({ title: 'Account lookup by Steam ID', account })] });
+    await interaction.editReply({ embeds: [buildLookupEmbed({ mode: 'steam', account })] });
   } catch (error) {
     await interaction.editReply({ content: toUserErrorMessage(error) });
     await services.logs.logSystemError({

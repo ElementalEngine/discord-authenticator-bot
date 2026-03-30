@@ -3,10 +3,12 @@ import type { AccountLookupResponse, RoleIntent } from '../../api/types.js';
 import { config } from '../../config/index.js';
 import type { SupportedGame } from '../../config/types.js';
 import {
-  formatAppliedRoleUpdates,
-  formatDiscordAccount,
+  formatDiscordAccountBlock,
   formatGameLabel,
-  formatSteamAccount,
+  formatRoleUpdateLines,
+  formatSteamAccountBlock,
+  toLookupDiscordFields,
+  toLookupSteamFields,
 } from '../formatters/registration-display.js';
 
 export function buildRegistrationStartEmbed(input: {
@@ -16,104 +18,135 @@ export function buildRegistrationStartEmbed(input: {
   return new EmbedBuilder()
     .setTitle('Welcome to CivPlayers Leagues')
     .setDescription(
-      'Read the server rules and Discord\'s **Terms of Service**, **Community Guidelines**, and **Partner Code of Conduct** before you continue.\n\n' +
-        'Use **Start Discord verification** below to begin Discord + Steam verification.\n' +
-        'This message updates automatically when the checks finish. You do **not** need a finish button.',
+      [
+        'Read the server rules and Discord’s **Terms of Service**, **Community Guidelines**, and **Partner Code of Conduct** before you continue.',
+        '',
+        'Use **Start Discord verification** below to begin Discord + Steam verification. This message updates automatically when the checks finish, showing either a clear confirmation or the reason registration could not be completed.',
+      ].join('\n'),
     )
     .addFields(
       {
-        name: '✅ Before you begin',
-        value:
-          '**1. Link Steam to Discord**\n' +
-          'Settings → Connections → Steam → sign in → enable **Display on profile**\n\n' +
-          '**2. Make your Steam profile public**\n' +
-          'Steam Community → Profile → Edit Profile → Privacy Settings\n' +
-          'Set **Game details** to **Public** and turn off private playtime\n\n' +
-          '**3. Finish the browser verification**\n' +
+        name: '📋 Before you begin',
+        value: [
+          '**Link Steam to Discord**',
+          'Settings → Connections → Steam → sign in → enable **Display on profile**',
+          '',
+          '**Make your Steam profile public**',
+          'Steam Community → Profile → Edit Profile → Privacy Settings',
+          'Set **Game details** to **Public** and turn off private playtime',
+          '',
+          '**Finish the browser verification**',
           'Use the button below, complete the browser step, then return to this message.',
+        ].join('\n'),
       },
       {
         name: 'Registration',
-        value:
-          `Game: **${formatGameLabel(input.game)}**\n` +
+        value: [
+          `Game: **${formatGameLabel(input.game)}**`,
           `Session expires: <t:${Math.floor(new Date(input.expiresAt).getTime() / 1000)}:R>`,
+        ].join('\n'),
       },
       {
-        name: 'Need help?',
-        value:
-          '• **Epic Games copy of Civ VI?** Type `s! egs`\n' +
+        name: 'Support',
+        value: [
+          '• **Epic Games copy of Civ VI?** Type `s! egs`',
           `• **Need help?** Ask <@&${config.discord.roles.moderator}> in <#${config.discord.channels.welcome}>`,
+        ].join('\n'),
       },
     );
 }
 
 export function buildRegistrationSuccessEmbed(input: {
   game: SupportedGame;
-  discordId: string;
-  discordDisplayName?: string | null;
-  discordUsername?: string | null;
   steamId: string;
   steamName?: string | null;
+  discordId: string;
+  discordUsername?: string | null;
+  discordDisplayName?: string | null;
   roleIntents: readonly RoleIntent[];
 }): EmbedBuilder {
   return new EmbedBuilder()
     .setTitle('Registration complete')
-    .setDescription('Your Discord and Steam accounts were verified successfully, and your CPL access has been updated.')
+    .setDescription('Your registration has been completed successfully and your CPL access has been updated.')
     .addFields(
       {
         name: 'Discord account',
-        value: formatDiscordAccount({
-          discordId: input.discordId,
+        value: formatDiscordAccountBlock({
           displayName: input.discordDisplayName,
           username: input.discordUsername,
+          discordId: input.discordId,
         }),
       },
       {
         name: 'Steam account',
-        value: formatSteamAccount({ steamId: input.steamId, steamName: input.steamName }),
+        value: formatSteamAccountBlock({ username: input.steamName, steamId: input.steamId }),
       },
-      { name: 'Game', value: formatGameLabel(input.game), inline: true },
-      { name: 'Discord role updates', value: formatAppliedRoleUpdates(input.roleIntents) },
+      { name: 'Game', value: formatGameLabel(input.game) },
+      { name: 'Discord role updates', value: formatRoleUpdateLines(input.roleIntents) },
       {
         name: 'Next step',
-        value: `You're ready to use the normal CPL channels and commands for **${formatGameLabel(input.game)}**.`,
+        value: `You’re ready to use the normal CPL channels and commands for **${formatGameLabel(input.game)}**.`,
       },
+    );
+}
+
+export function buildManualRegistrationSuccessEmbed(input: {
+  game: SupportedGame;
+  steamId: string;
+  steamName?: string | null;
+  discordId: string;
+  discordUsername?: string | null;
+  discordDisplayName?: string | null;
+  roleIntents: readonly RoleIntent[];
+}): EmbedBuilder {
+  return new EmbedBuilder()
+    .setTitle('Manual registration complete')
+    .setDescription('The registration was completed successfully and the member’s CPL access has been updated.')
+    .addFields(
+      {
+        name: 'Discord account',
+        value: formatDiscordAccountBlock({
+          displayName: input.discordDisplayName,
+          username: input.discordUsername,
+          discordId: input.discordId,
+        }),
+      },
+      {
+        name: 'Steam account',
+        value: formatSteamAccountBlock({ username: input.steamName, steamId: input.steamId }),
+      },
+      { name: 'Game', value: formatGameLabel(input.game) },
+      { name: 'Discord role updates', value: formatRoleUpdateLines(input.roleIntents) },
+    );
+}
+
+export function buildRankRoleSuccessEmbed(input: {
+  game: SupportedGame;
+  roleIntents: readonly RoleIntent[];
+}): EmbedBuilder {
+  return new EmbedBuilder()
+    .setTitle('Ranked role updated')
+    .setDescription('Your additional ranked role has been updated successfully.')
+    .addFields(
+      { name: 'Game', value: formatGameLabel(input.game) },
+      { name: 'Discord role updates', value: formatRoleUpdateLines(input.roleIntents) },
     );
 }
 
 export function buildRegistrationExpiredEmbed(): EmbedBuilder {
   return new EmbedBuilder()
     .setTitle('Registration expired')
-    .setDescription('This registration session expired. Run `/register register` to start again with a fresh link.');
+    .setDescription('This registration session expired before it could finish. Run `/register register` to start again.');
 }
 
-export function buildRegistrationCompletedEmbed(): EmbedBuilder {
-  return new EmbedBuilder()
-    .setTitle('Registration already completed')
-    .setDescription('This registration session has already been completed. You can continue in the normal CPL channels for your game.');
-}
-
-export function buildRegistrationFailureEmbed(input: {
-  message: string;
-}): EmbedBuilder {
+export function buildRegistrationFailureEmbed(message: string): EmbedBuilder {
   return new EmbedBuilder()
     .setTitle('Registration could not be completed')
-    .setDescription(input.message);
+    .setDescription(message);
 }
 
-export function buildLookupEmbed(input: { title: string; account: AccountLookupResponse }): EmbedBuilder {
-  const registrations = Object.entries(input.account.registrations ?? {}).map(([game, value]) => {
-    if (!value) return null;
-    return `${formatGameLabel(game as SupportedGame)}: ${value.status} (${value.method})`;
-  }).filter((value): value is string => Boolean(value));
-
+export function buildLookupEmbed(input: { mode: 'discord' | 'steam'; account: AccountLookupResponse }): EmbedBuilder {
   return new EmbedBuilder()
-    .setTitle(input.title)
-    .addFields(
-      { name: 'Discord ID', value: `\`${input.account.discord_id}\`` },
-      { name: 'Steam ID', value: input.account.steam_id ? `\`${input.account.steam_id}\`` : 'Not linked' },
-      { name: 'Username snapshot', value: input.account.username_snapshot ?? 'Unknown', inline: true },
-      { name: 'Display snapshot', value: input.account.display_name_snapshot ?? 'Unknown', inline: true },
-      { name: 'Registrations', value: registrations.join('\n') || 'None' },
-    );
+    .setTitle(input.mode === 'discord' ? 'Account lookup — Discord ID' : 'Account lookup — Steam ID')
+    .addFields(...(input.mode === 'discord' ? toLookupDiscordFields(input.account) : toLookupSteamFields(input.account)));
 }

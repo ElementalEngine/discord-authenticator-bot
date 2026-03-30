@@ -1,4 +1,4 @@
-import type { RoleIntent, RegistrationSessionStatusResponse } from '../../api/types.js';
+import type { AccountLookupResponse, AccountRegistrationRecord, RoleIntent } from '../../api/types.js';
 import { ROLE_INTENTS } from '../../config/constants.js';
 import { config } from '../../config/index.js';
 import type { SupportedGame } from '../../config/types.js';
@@ -7,74 +7,118 @@ export function formatGameLabel(game: SupportedGame): string {
   return game === 'civ6' ? 'Civilization VI' : 'Civilization VII';
 }
 
-export function formatDiscordAccount(input: {
-  discordId: string;
+export function formatDiscordAccountBlock(input: {
   displayName?: string | null;
   username?: string | null;
+  discordId: string;
 }): string {
-  const lines: string[] = [];
-  if (input.displayName?.trim()) {
-    lines.push(`Display name: **${escapeMarkdownLite(input.displayName.trim())}**`);
-  }
-  if (input.username?.trim()) {
-    lines.push(`Username: **${escapeMarkdownLite(input.username.trim())}**`);
-  }
-  lines.push(`Discord ID: \`${input.discordId}\``);
-  return lines.join('\n');
+  return [
+    `Display name: ${input.displayName?.trim() || 'Unknown'}`,
+    `Username: ${formatSearchable(input.username)}`,
+    `Discord ID: ${formatSearchable(input.discordId)}`,
+  ].join('\n');
 }
 
-export function formatSteamAccount(input: {
-  steamId: string;
-  steamName?: string | null;
+export function formatSteamAccountBlock(input: {
+  username?: string | null;
+  steamId?: string | null;
+  emptyMessage?: string;
 }): string {
-  const lines: string[] = [];
-  if (input.steamName?.trim()) {
-    lines.push(`Username: **${escapeMarkdownLite(input.steamName.trim())}**`);
+  if (!input.steamId) {
+    return input.emptyMessage ?? 'No linked Steam account found.';
   }
-  lines.push(`Steam ID: \`${input.steamId}\``);
-  return lines.join('\n');
+
+  return [
+    `Username: ${formatSearchable(input.username)}`,
+    `Steam ID: ${formatSearchable(input.steamId)}`,
+  ].join('\n');
 }
 
-export function formatAppliedRoleUpdates(intents: readonly RoleIntent[]): string {
-  const lines = intents.map((intent) => roleUpdateLine(intent));
-  return lines.join('\n') || 'No Discord role changes were required.';
+export function formatRoleUpdateLines(intents: readonly RoleIntent[]): string {
+  if (!intents.length) return 'No Discord role changes were required.';
+  return intents.map((intent) => `• ${roleUpdateLabel(intent)}`).join('\n');
 }
 
-export function extractAuthenticationSnapshot(status: RegistrationSessionStatusResponse): {
-  username: string;
-  displayName: string;
-  locale: string;
-  verified: string;
-  mfaEnabled: string;
-  steamName: string;
-  steamId: string;
-} {
-  return {
-    username: status.oauth_username_snapshot ?? 'Unknown',
-    displayName: status.oauth_display_name_snapshot ?? 'Unknown',
-    locale: status.oauth_locale ?? 'Unknown',
-    verified: status.oauth_verified == null ? 'Unknown' : status.oauth_verified ? 'Yes' : 'No',
-    mfaEnabled: status.oauth_mfa_enabled == null ? 'Unknown' : status.oauth_mfa_enabled ? 'Enabled' : 'Disabled',
-    steamName: status.linked_account_name?.trim() || 'Unknown',
-    steamId: status.linked_account_id ?? 'Unknown',
-  };
+export function formatRegistrationLines(
+  registrations: Partial<Record<SupportedGame, AccountRegistrationRecord>>,
+): string {
+  const lines = (Object.entries(registrations) as Array<[SupportedGame, AccountRegistrationRecord | undefined]>)
+    .map(([game, value]) => {
+      if (!value) return null;
+      return `• ${formatGameLabel(game)} — ${value.status} (${value.method})`;
+    })
+    .filter((value): value is string => Boolean(value));
+
+  return lines.length ? lines.join('\n') : 'No registrations found.';
 }
 
-function roleUpdateLine(intent: RoleIntent): string {
+export function toLookupDiscordFields(account: AccountLookupResponse): Array<{ name: string; value: string; inline?: boolean }> {
+  return [
+    {
+      name: 'Discord account',
+      value: formatDiscordAccountBlock({
+        displayName: account.discord_display_name,
+        username: account.discord_username,
+        discordId: account.discord_id,
+      }),
+    },
+    {
+      name: 'Linked Steam account',
+      value: formatSteamAccountBlock({
+        username: account.steam_name,
+        steamId: account.steam_id,
+        emptyMessage: 'No linked Steam account found.',
+      }),
+    },
+    {
+      name: 'Registrations',
+      value: formatRegistrationLines(account.registrations),
+    },
+  ];
+}
+
+export function toLookupSteamFields(account: AccountLookupResponse): Array<{ name: string; value: string; inline?: boolean }> {
+  return [
+    {
+      name: 'Steam account',
+      value: formatSteamAccountBlock({
+        username: account.steam_name,
+        steamId: account.steam_id,
+        emptyMessage: 'No Steam account found.',
+      }),
+    },
+    {
+      name: 'Linked Discord account',
+      value: account.discord_id
+        ? formatDiscordAccountBlock({
+            displayName: account.discord_display_name,
+            username: account.discord_username,
+            discordId: account.discord_id,
+          })
+        : 'No linked Discord account found.',
+    },
+    {
+      name: 'Registrations',
+      value: formatRegistrationLines(account.registrations),
+    },
+  ];
+}
+
+function roleUpdateLabel(intent: RoleIntent): string {
   switch (intent) {
     case ROLE_INTENTS.grantCiv6Rank:
-      return `• Added <@&${config.discord.roles.civ6Rank}>`;
+      return `Added <@&${config.discord.roles.civ6Rank}>`;
     case ROLE_INTENTS.grantCiv7Rank:
-      return `• Added <@&${config.discord.roles.civ7Rank}>`;
+      return `Added <@&${config.discord.roles.civ7Rank}>`;
     case ROLE_INTENTS.grantNovice:
-      return `• Added <@&${config.discord.roles.novice}>`;
+      return `Added <@&${config.discord.roles.novice}>`;
     case ROLE_INTENTS.removeNonVerified:
-      return `• Removed <@&${config.discord.roles.nonVerified}>`;
+      return `Removed <@&${config.discord.roles.nonVerified}>`;
     default:
-      return `• ${intent}`;
+      return intent;
   }
 }
 
-function escapeMarkdownLite(value: string): string {
-  return value.replace(/([\\*_`~|])/g, '\\$1');
+function formatSearchable(value?: string | null): string {
+  return value?.trim() ? `\`${value.trim()}\`` : 'Unknown';
 }

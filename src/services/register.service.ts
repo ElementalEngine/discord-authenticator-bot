@@ -9,11 +9,11 @@ import type { SupportedGame } from '../config/types.js';
 import { AuthLogService } from './auth-log.service.js';
 import { RoleSyncService } from './role-sync.service.js';
 
-type RegistrationMode = 'self-service' | 'manual';
+type RegistrationMode = 'self-service' | 'manual' | 'rank-role';
 
 type FinalizableOperation = Pick<
   RegistrationOperationResponse,
-  'operation_id' | 'discord_user_id' | 'game' | 'steam_id' | 'role_intents'
+  'operation_id' | 'discord_user_id' | 'game' | 'steam_id' | 'steam_name' | 'role_intents'
 >;
 
 export class RegisterService {
@@ -33,41 +33,39 @@ export class RegisterService {
 
   async completeSelfServiceRegistration(input: {
     sessionId: string;
-    discordUserId: string;
+    actor: User;
     member: GuildMember;
-    validatedSession?: RegistrationSessionStatusResponse;
   }): Promise<RegistrationOperationResponse> {
     const operation = await this.api.completeRegistrationSession({
       sessionId: input.sessionId,
-      discord_user_id: input.discordUserId,
+      discord_user_id: input.actor.id,
     });
 
     return this.applyAndFinalize({
       operation,
-      actorId: input.discordUserId,
-      subjectId: input.member.id,
+      actor: input.actor,
+      subject: input.actor,
       member: input.member,
       mode: 'self-service',
-      validatedSession: input.validatedSession,
     });
   }
 
   async addRankRole(input: {
-    userId: string;
+    user: User;
     game: SupportedGame;
     member: GuildMember;
   }): Promise<RegistrationOperationResponse> {
     const operation = await this.api.requestRankRole({
-      discord_user_id: input.userId,
+      discord_user_id: input.user.id,
       game: input.game,
     });
 
     return this.applyAndFinalize({
       operation,
-      actorId: input.userId,
-      subjectId: input.member.id,
+      actor: input.user,
+      subject: input.user,
       member: input.member,
-      mode: 'self-service',
+      mode: 'rank-role',
     });
   }
 
@@ -89,10 +87,11 @@ export class RegisterService {
 
     return this.applyAndFinalize({
       operation,
-      actorId: input.actor.id,
-      subjectId: input.subject.id,
+      actor: input.actor,
+      subject: input.subject,
       member: input.member,
       mode: 'manual',
+      manualReason: input.reason,
     });
   }
 
@@ -104,13 +103,32 @@ export class RegisterService {
     return this.api.lookupBySteamId(steamId);
   }
 
+  async logAuthenticationCompleted(input: {
+    session: RegistrationSessionStatusResponse;
+    game: SupportedGame;
+    user: User;
+    member: GuildMember;
+  }): Promise<void> {
+    await this.logs.logAuthenticationCompleted({
+      discordId: input.user.id,
+      discordDisplayName: input.member.displayName,
+      discordUsername: input.session.discord_username ?? input.user.username,
+      locale: input.session.discord_locale ?? null,
+      verified: input.session.discord_verified ?? null,
+      mfaEnabled: input.session.discord_mfa_enabled ?? null,
+      steamId: input.session.linked_account_id ?? '',
+      steamName: input.session.linked_account_name ?? null,
+      game: input.game,
+    });
+  }
+
   private async applyAndFinalize(input: {
     operation: FinalizableOperation;
-    actorId: string;
-    subjectId: string;
+    actor: User;
+    subject: User;
     member: GuildMember;
     mode: RegistrationMode;
-    validatedSession?: RegistrationSessionStatusResponse;
+    manualReason?: string;
   }): Promise<RegistrationOperationResponse> {
     try {
       const sync = await this.roleSync.applyRoleIntents(input.member, input.operation.role_intents);
@@ -120,17 +138,53 @@ export class RegisterService {
         failure_code: null,
         failure_message: null,
       });
-      await this.logs.logRegistrationResult({
-        actorId: input.actorId,
-        subjectId: input.subjectId,
-        game: input.operation.game,
-        steamId: input.operation.steam_id,
-        steamName: input.validatedSession?.linked_account_name,
-        appliedRoleIntents: sync.applied,
-        mode: input.mode,
-        usernameSnapshot: input.validatedSession?.oauth_username_snapshot ?? null,
-        displayNameSnapshot: input.validatedSession?.oauth_display_name_snapshot ?? null,
-      });
+
+      if (input.mode === 'manual') {
+        await this.logs.logManualRegistrationCompleted({
+          actorId: input.actor.id,
+          subjectId: input.subject.id,
+          discordDisplayName: input.member.displayName,
+          discordUsername: input.subject.username,
+          steamId: input.operation.steam_id,
+          steamName: input.operation.steam_name ?? null,
+          game: input.operation.game,
+          reason: input.manualReason ?? 'No reason provided.',
+        });
+
+        await this.logs.logRegistrationResult({
+          actorId: input.actor.id,
+          subjectId: input.subject.id,
+          discordDisplayName: input.member.displayName,
+          discordUsername: input.subject.username,
+          game: input.operation.game,
+          steamId: input.operation.steam_id,
+          steamName: input.operation.steam_name ?? null,
+          appliedRoleIntents: sync.applied,
+          mode: 'manual',
+        });
+      } else if (input.mode === 'rank-role') {
+        await this.logs.logRankRoleResult({
+          actorId: input.actor.id,
+          subjectId: input.subject.id,
+          discordDisplayName: input.member.displayName,
+          discordUsername: input.subject.username,
+          game: input.operation.game,
+          appliedRoleIntents: sync.applied,
+        });
+      } else {
+        await this.logs.logRegistrationResult({
+          actorId: input.actor.id,
+          subjectId: input.subject.id,
+          discordDisplayName: input.member.displayName,
+          discordUsername: input.subject.username,
+          game: input.operation.game,
+          steamId: input.operation.steam_id,
+          steamName: input.operation.steam_name ?? null,
+          appliedRoleIntents: sync.applied,
+          mode: 'self-service',
+        });
+      }
+
       return { ...input.operation, role_intents: sync.applied };
     } catch (error) {
       await this.api

@@ -1,46 +1,97 @@
 import { EmbedBuilder, type Client } from 'discord.js';
-import type { RegistrationSessionStatusResponse, RoleIntent } from '../api/types.js';
+import type { RoleIntent } from '../api/types.js';
 import { config } from '../config/index.js';
 import type { SupportedGame } from '../config/types.js';
-import {
-  extractAuthenticationSnapshot,
-  formatAppliedRoleUpdates,
-  formatDiscordAccount,
-  formatGameLabel,
-  formatSteamAccount,
-} from '../ui/formatters/registration-display.js';
 import { toSystemErrorSummary } from '../utils/error-message.js';
+import {
+  formatDiscordAccountBlock,
+  formatGameLabel,
+  formatRoleUpdateLines,
+  formatSteamAccountBlock,
+} from '../ui/formatters/registration-display.js';
 
 export class AuthLogService {
   constructor(private readonly client: Client) {}
 
-  async logSuccessfulAuthentication(input: {
-    userId: string;
-    session: RegistrationSessionStatusResponse;
+  async logAuthenticationCompleted(input: {
+    discordId: string;
+    discordDisplayName?: string | null;
+    discordUsername?: string | null;
+    locale?: string | null;
+    verified?: boolean | null;
+    mfaEnabled?: boolean | null;
+    steamId: string;
+    steamName?: string | null;
+    game: SupportedGame;
   }): Promise<void> {
     const channel = await this.client.channels.fetch(config.discord.channels.authLog).catch(() => null);
     if (!channel?.isSendable()) return;
 
-    const snapshot = extractAuthenticationSnapshot(input.session);
     const embed = new EmbedBuilder()
       .setTitle('🔹 Authentication completed')
       .addFields(
         {
           name: 'Discord',
-          value:
-            `Display name: **${snapshot.displayName}**\n` +
-            `Username: **${snapshot.username}**\n` +
-            `Discord ID: \`${input.userId}\`\n` +
-            `Locale: \`${snapshot.locale}\`\n` +
-            `Verified: ${snapshot.verified}\n` +
-            `MFA: ${snapshot.mfaEnabled}`,
+          value: [
+            formatDiscordAccountBlock({
+              displayName: input.discordDisplayName,
+              username: input.discordUsername,
+              discordId: input.discordId,
+            }),
+            `Locale: ${input.locale?.trim() ? `\`${input.locale.trim()}\`` : 'Unknown'}`,
+            `Verified: ${formatBoolean(input.verified)}`,
+            `MFA: ${formatBoolean(input.mfaEnabled, { trueLabel: 'Enabled', falseLabel: 'Disabled' })}`,
+          ].join('\n'),
         },
         {
           name: 'Steam',
-          value:
-            `Username: **${snapshot.steamName}**\n` +
-            `Steam ID: \`${snapshot.steamId}\`\n` +
-            `Game: **${formatGameLabel(input.session.game ?? 'civ6')}**`,
+          value: [
+            formatSteamAccountBlock({ username: input.steamName, steamId: input.steamId }),
+            `Game: ${formatGameLabel(input.game)}`,
+          ].join('\n'),
+        },
+      );
+
+    await channel.send({ embeds: [embed] });
+  }
+
+  async logManualRegistrationCompleted(input: {
+    actorId: string;
+    subjectId: string;
+    discordDisplayName?: string | null;
+    discordUsername?: string | null;
+    steamId: string;
+    steamName?: string | null;
+    game: SupportedGame;
+    reason: string;
+  }): Promise<void> {
+    const channel = await this.client.channels.fetch(config.discord.channels.authLog).catch(() => null);
+    if (!channel?.isSendable()) return;
+
+    const embed = new EmbedBuilder()
+      .setTitle('🔹 Manual registration completed')
+      .addFields(
+        {
+          name: 'Discord',
+          value: formatDiscordAccountBlock({
+            displayName: input.discordDisplayName,
+            username: input.discordUsername,
+            discordId: input.subjectId,
+          }),
+        },
+        {
+          name: 'Steam',
+          value: [
+            formatSteamAccountBlock({ username: input.steamName, steamId: input.steamId }),
+            `Game: ${formatGameLabel(input.game)}`,
+          ].join('\n'),
+        },
+        {
+          name: 'Action',
+          value: [
+            `Performed by: <@${input.actorId}>`,
+            `Reason: ${input.reason}`,
+          ].join('\n'),
         },
       );
 
@@ -50,13 +101,13 @@ export class AuthLogService {
   async logRegistrationResult(input: {
     actorId: string;
     subjectId: string;
+    discordDisplayName?: string | null;
+    discordUsername?: string | null;
     game: SupportedGame;
     steamId: string;
     steamName?: string | null;
     appliedRoleIntents: readonly RoleIntent[];
     mode: 'self-service' | 'manual';
-    usernameSnapshot?: string | null;
-    displayNameSnapshot?: string | null;
   }): Promise<void> {
     const channel = await this.client.channels.fetch(config.discord.channels.registrationLog).catch(() => null);
     if (!channel?.isSendable()) return;
@@ -66,21 +117,48 @@ export class AuthLogService {
       .addFields(
         {
           name: 'Discord account',
-          value: formatDiscordAccount({
+          value: formatDiscordAccountBlock({
+            displayName: input.discordDisplayName,
+            username: input.discordUsername,
             discordId: input.subjectId,
-            displayName: input.displayNameSnapshot,
-            username: input.usernameSnapshot,
           }),
         },
         {
           name: 'Steam account',
-          value: formatSteamAccount({ steamId: input.steamId, steamName: input.steamName }),
+          value: formatSteamAccountBlock({ username: input.steamName, steamId: input.steamId }),
         },
-        { name: 'Game', value: formatGameLabel(input.game), inline: true },
+        { name: 'Game', value: formatGameLabel(input.game) },
+        { name: 'Discord role updates', value: formatRoleUpdateLines(input.appliedRoleIntents) },
+        ...buildPerformedByField(input.actorId, input.subjectId),
+      );
+
+    await channel.send({ embeds: [embed] });
+  }
+
+  async logRankRoleResult(input: {
+    actorId: string;
+    subjectId: string;
+    discordDisplayName?: string | null;
+    discordUsername?: string | null;
+    game: SupportedGame;
+    appliedRoleIntents: readonly RoleIntent[];
+  }): Promise<void> {
+    const channel = await this.client.channels.fetch(config.discord.channels.registrationLog).catch(() => null);
+    if (!channel?.isSendable()) return;
+
+    const embed = new EmbedBuilder()
+      .setTitle('✅ Ranked role updated')
+      .addFields(
         {
-          name: 'Discord role updates',
-          value: formatAppliedRoleUpdates(input.appliedRoleIntents),
+          name: 'Discord account',
+          value: formatDiscordAccountBlock({
+            displayName: input.discordDisplayName,
+            username: input.discordUsername,
+            discordId: input.subjectId,
+          }),
         },
+        { name: 'Game', value: formatGameLabel(input.game) },
+        { name: 'Discord role updates', value: formatRoleUpdateLines(input.appliedRoleIntents) },
       );
 
     await channel.send({ embeds: [embed] });
@@ -98,11 +176,40 @@ export class AuthLogService {
     const embed = new EmbedBuilder()
       .setTitle(input.title)
       .setDescription(toSystemErrorSummary(input.error))
-      .addFields(
-        ...(input.actorId ? [{ name: 'Actor', value: `<@${input.actorId}>`, inline: true }] : []),
-        ...(input.subjectId ? [{ name: 'Subject', value: `<@${input.subjectId}>`, inline: true }] : []),
-      );
+      .addFields(...buildSystemActorFields(input.actorId, input.subjectId));
 
     await channel.send({ embeds: [embed] });
   }
+}
+
+function buildPerformedByField(actorId: string, subjectId: string): Array<{ name: string; value: string; inline?: boolean }> {
+  return actorId !== subjectId ? [{ name: 'Performed by', value: `<@${actorId}>` }] : [];
+}
+
+function buildSystemActorFields(
+  actorId?: string,
+  subjectId?: string,
+): Array<{ name: string; value: string; inline?: boolean }> {
+  if (actorId && subjectId && actorId !== subjectId) {
+    return [
+      { name: 'Performed by', value: `<@${actorId}>`, inline: true },
+      { name: 'Subject', value: `<@${subjectId}>`, inline: true },
+    ];
+  }
+  if (subjectId) {
+    return [{ name: 'User', value: `<@${subjectId}>`, inline: true }];
+  }
+  if (actorId) {
+    return [{ name: 'User', value: `<@${actorId}>`, inline: true }];
+  }
+  return [];
+}
+
+function formatBoolean(
+  value: boolean | null | undefined,
+  labels: { trueLabel?: string; falseLabel?: string } = {},
+): string {
+  if (value === true) return labels.trueLabel ?? 'Yes';
+  if (value === false) return labels.falseLabel ?? 'No';
+  return 'Unknown';
 }
