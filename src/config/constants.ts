@@ -44,4 +44,5 @@ export const EMOJIS = {
   warning: '⚠️',
   error: '❌',
   info: 'ℹ️',
+  detail: '🔹',
 } as const;

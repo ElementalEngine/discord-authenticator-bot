@@ -1,6 +1,7 @@
 import { EmbedBuilder, type Client } from 'discord.js';
 import type { RegistrationPlatform, RoleIntent } from '../api/types.js';
 import { config } from '../config/index.js';
+import { EMOJIS } from '../config/constants.js';
 import type { SupportedGame } from '../config/types.js';
 import { toSystemErrorSummary } from '../utils/error-message.js';
 import {
@@ -29,7 +30,7 @@ export class AuthLogService {
     if (!channel?.isSendable()) return;
 
     const embed = new EmbedBuilder()
-      .setTitle('🔹 Authentication completed')
+      .setTitle(`${EMOJIS.detail} Authentication completed`)
       .addFields(
         {
           name: 'Discord',
@@ -71,7 +72,7 @@ export class AuthLogService {
     if (!channel?.isSendable()) return;
 
     const embed = new EmbedBuilder()
-      .setTitle('🔹 Manual registration completed')
+      .setTitle(`${EMOJIS.detail} Manual registration completed`)
       .addFields(
         {
           name: 'Discord',
@@ -113,7 +114,7 @@ export class AuthLogService {
     if (!channel?.isSendable()) return;
 
     const embed = new EmbedBuilder()
-      .setTitle(input.mode === 'manual' ? '✅ Manual registration completed' : '✅ Registration completed')
+      .setTitle(input.mode === 'manual' ? `${EMOJIS.success} Manual registration completed` : `${EMOJIS.success} Registration completed`)
       .addFields(
         {
           name: 'Discord account',
@@ -147,7 +148,7 @@ export class AuthLogService {
     if (!channel?.isSendable()) return;
 
     const embed = new EmbedBuilder()
-      .setTitle('✅ Ranked role updated')
+      .setTitle(`${EMOJIS.success} Ranked role updated`)
       .addFields(
         {
           name: 'Discord account',
