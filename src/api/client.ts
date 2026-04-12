@@ -2,9 +2,10 @@ import { config } from '../config/index.js';
 import type { SupportedGame } from '../config/types.js';
 import { ApiError } from './errors.js';
 import type {
-  AccountLookupResponse,
   ApiErrorEnvelope,
+  DiscordLookupResponse,
   FinalizeOperationRequest,
+  LinkedAccountLookupResponse,
   RegistrationOperationResponse,
   RegistrationPlatform,
   RegistrationSessionResponse,
@@ -104,16 +105,16 @@ export class ApiClient {
     );
   }
 
-  async lookupByDiscordId(discordId: string): Promise<AccountLookupResponse> {
-    return this.requestJson<AccountLookupResponse>(
+  async lookupByDiscordId(discordId: string): Promise<DiscordLookupResponse> {
+    return this.requestJson<DiscordLookupResponse>(
       `/api/v1/auth/admin/accounts/discord/${encodeURIComponent(discordId)}`,
       { method: 'GET' },
     );
   }
 
-  async lookupBySteamId(steamId: string): Promise<AccountLookupResponse> {
-    return this.requestJson<AccountLookupResponse>(
-      `/api/v1/auth/admin/accounts/steam/${encodeURIComponent(steamId)}`,
+  async lookupByLinkedAccountId(linkedAccountId: string): Promise<LinkedAccountLookupResponse> {
+    return this.requestJson<LinkedAccountLookupResponse>(
+      `/api/v1/auth/admin/accounts/linked-account/${encodeURIComponent(linkedAccountId)}`,
       { method: 'GET' },
     );
   }

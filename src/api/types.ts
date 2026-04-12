@@ -74,24 +74,28 @@ export interface FinalizeOperationRequest {
   failure_message: string | null;
 }
 
-export interface AccountRegistrationRecord {
-  status: string;
-  method: string;
-  registered_at: string;
-  ownership_verified_at?: string | null;
-  playtime_minutes?: number | null;
+export interface LinkedAccountLookupHit {
+  linked_platform?: RegistrationPlatform | null;
+  linked_account_id: string;
+  linked_account_name?: string | null;
 }
 
-export interface AccountLookupResponse {
+export interface DiscordLookupResponse {
   discord_id: string;
   discord_username?: string | null;
   discord_display_name?: string | null;
-  steam_id: string | null;
-  steam_name?: string | null;
-  linked_platform?: RegistrationPlatform | null;
-  linked_account_id?: string | null;
+  linked_accounts: LinkedAccountLookupHit[];
+}
+
+export interface DiscordAccountLookupHit {
+  discord_id: string;
+  discord_username?: string | null;
+  discord_display_name?: string | null;
+}
+
+export interface LinkedAccountLookupResponse {
+  linked_account_id: string;
   linked_account_name?: string | null;
-  registrations: Partial<Record<SupportedGame, AccountRegistrationRecord>>;
-  server_registered_at?: string | null;
-  record_version?: number | null;
+  linked_platform?: RegistrationPlatform | null;
+  discord_accounts: DiscordAccountLookupHit[];
 }

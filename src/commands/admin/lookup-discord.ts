@@ -1,5 +1,5 @@
 import { MessageFlags, SlashCommandSubcommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
-import { buildLookupEmbed } from '../../ui/embeds/register.js';
+import { buildDiscordLookupEmbed } from '../../ui/embeds/register.js';
 import { toUserErrorMessage } from '../../utils/error-message.js';
 import type { RegisterService } from '../../services/register.service.js';
 
@@ -8,7 +8,7 @@ const DISCORD_ID_RE = /^\d{17,20}$/;
 export function buildLookupDiscordSubcommand(): SlashCommandSubcommandBuilder {
   return new SlashCommandSubcommandBuilder()
     .setName('lookup-discord')
-    .setDescription('Look up an account by Discord ID.')
+    .setDescription('Look up a Discord account and its linked account records.')
     .addStringOption((option) => option.setName('discord-id').setDescription('Discord ID').setRequired(true));
 }
 
@@ -26,7 +26,7 @@ export async function executeLookupDiscordSubcommand(
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
   try {
     const account = await services.lookupByDiscordId(discordId);
-    await interaction.editReply({ embeds: [buildLookupEmbed({ mode: 'discord', account })] });
+    await interaction.editReply({ embeds: [buildDiscordLookupEmbed(account)] });
   } catch (error) {
     await interaction.editReply({ content: toUserErrorMessage(error) });
     await services.logs.logSystemError({

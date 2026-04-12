@@ -1,7 +1,8 @@
 import type { Client, GuildMember, User } from 'discord.js';
 import { ApiClient } from '../api/client.js';
 import type {
-  AccountLookupResponse,
+  DiscordLookupResponse,
+  LinkedAccountLookupResponse,
   RegistrationOperationResponse,
   RegistrationPlatform,
   RegistrationSessionStatusResponse,
@@ -112,12 +113,12 @@ export class RegisterService {
     });
   }
 
-  async lookupByDiscordId(discordId: string): Promise<AccountLookupResponse> {
+  async lookupByDiscordId(discordId: string): Promise<DiscordLookupResponse> {
     return this.api.lookupByDiscordId(discordId);
   }
 
-  async lookupBySteamId(steamId: string): Promise<AccountLookupResponse> {
-    return this.api.lookupBySteamId(steamId);
+  async lookupByLinkedAccountId(linkedAccountId: string): Promise<LinkedAccountLookupResponse> {
+    return this.api.lookupByLinkedAccountId(linkedAccountId);
   }
 
   async logAuthenticationCompleted(input: {

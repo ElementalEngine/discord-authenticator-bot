@@ -1,15 +1,21 @@
 import { EmbedBuilder } from 'discord.js';
-import type { AccountLookupResponse, RegistrationPlatform, RoleIntent } from '../../api/types.js';
+import type {
+  DiscordLookupResponse,
+  LinkedAccountLookupResponse,
+  RegistrationPlatform,
+  RoleIntent,
+} from '../../api/types.js';
 import { config } from '../../config/index.js';
 import type { SupportedGame } from '../../config/types.js';
 import {
   formatDiscordAccountBlock,
   formatGameLabel,
+  formatLookupSummary,
   formatRoleUpdateLines,
   formatLinkedAccountBlock,
   formatLinkedAccountHeading,
-  toLookupDiscordFields,
-  toLookupSteamFields,
+  toDiscordLookupFields,
+  toLinkedAccountLookupFields,
 } from '../formatters/registration-display.js';
 
 export function buildRegistrationStartEmbed(input: {
@@ -147,8 +153,28 @@ export function buildRegistrationFailureEmbed(message: string): EmbedBuilder {
     .setDescription(message);
 }
 
-export function buildLookupEmbed(input: { mode: 'discord' | 'steam'; account: AccountLookupResponse }): EmbedBuilder {
+export function buildDiscordLookupEmbed(account: DiscordLookupResponse): EmbedBuilder {
   return new EmbedBuilder()
-    .setTitle(input.mode === 'discord' ? 'Account lookup — Discord ID' : 'Account lookup — Steam ID')
-    .addFields(...(input.mode === 'discord' ? toLookupDiscordFields(input.account) : toLookupSteamFields(input.account)));
+    .setTitle('Lookup by Discord ID')
+    .setDescription(
+      formatLookupSummary({
+        label: 'Linked account records found',
+        count: account.linked_accounts.length,
+        multipleWarning: 'Multiple linked account records found for this Discord account.',
+      }),
+    )
+    .addFields(...toDiscordLookupFields(account));
+}
+
+export function buildLinkedAccountLookupEmbed(account: LinkedAccountLookupResponse): EmbedBuilder {
+  return new EmbedBuilder()
+    .setTitle('Lookup by linked account ID')
+    .setDescription(
+      formatLookupSummary({
+        label: 'Discord accounts found',
+        count: account.discord_accounts.length,
+        multipleWarning: 'Multiple Discord accounts are tied to this linked account.',
+      }),
+    )
+    .addFields(...toLinkedAccountLookupFields(account));
 }

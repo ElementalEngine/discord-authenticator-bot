@@ -8,7 +8,7 @@ export const COMMAND_NAMES = {
 export const ADMIN_SUBCOMMANDS = {
   manualRegister: 'manual-register',
   lookupDiscord: 'lookup-discord',
-  lookupSteam: 'lookup-steam',
+  lookupLinkedAccount: 'lookup-linked-account',
 } as const;
 
 export const REGISTER_SUBCOMMANDS = {

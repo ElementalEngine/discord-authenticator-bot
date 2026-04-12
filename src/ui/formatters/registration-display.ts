@@ -1,6 +1,7 @@
 import type {
-  AccountLookupResponse,
-  AccountRegistrationRecord,
+  DiscordLookupResponse,
+  LinkedAccountLookupHit,
+  LinkedAccountLookupResponse,
   RegistrationPlatform,
   RoleIntent,
 } from '../../api/types.js';
@@ -70,21 +71,16 @@ export function formatRoleUpdateLines(intents: readonly RoleIntent[]): string {
   return intents.map((intent) => `• ${roleUpdateLabel(intent)}`).join('\n');
 }
 
-export function formatRegistrationLines(
-  registrations: Partial<Record<SupportedGame, AccountRegistrationRecord>>,
-): string {
-  const lines = (Object.entries(registrations) as Array<[SupportedGame, AccountRegistrationRecord | undefined]>)
-    .map(([game, value]) => {
-      if (!value) return null;
-      return `• ${formatGameLabel(game)} — ${value.status} (${value.method})`;
-    })
-    .filter((value): value is string => Boolean(value));
-
-  return lines.length ? lines.join('\n') : 'No registrations found.';
+export function formatLookupSummary(input: { label: string; count: number; multipleWarning: string }): string {
+  if (input.count > 1) {
+    return `${input.label}: ${input.count}\n⚠ ${input.multipleWarning}`;
+  }
+  return `${input.label}: ${input.count}`;
 }
 
-export function toLookupDiscordFields(account: AccountLookupResponse): Array<{ name: string; value: string; inline?: boolean }> {
-  const platform = account.linked_platform ?? (account.steam_id ? 'steam' : null);
+export function toDiscordLookupFields(
+  account: DiscordLookupResponse,
+): Array<{ name: string; value: string; inline?: boolean }> {
   return [
     {
       name: 'Discord account',
@@ -95,48 +91,79 @@ export function toLookupDiscordFields(account: AccountLookupResponse): Array<{ n
       }),
     },
     {
-      name: `Linked ${formatLinkedAccountHeading(platform)}`,
-      value: formatLinkedAccountBlock({
-        platform,
-        username: account.linked_account_name ?? account.steam_name,
-        accountId: account.linked_account_id ?? account.steam_id,
-        emptyMessage: formatLinkedAccountEmpty(platform),
-      }),
-    },
-    {
-      name: 'Registrations',
-      value: formatRegistrationLines(account.registrations),
+      name: linkedAccountFieldTitle(account.linked_accounts.length),
+      value: formatLinkedAccountHitLines(account.linked_accounts),
     },
   ];
 }
 
-export function toLookupSteamFields(account: AccountLookupResponse): Array<{ name: string; value: string; inline?: boolean }> {
-  const platform = account.linked_platform ?? (account.steam_id ? 'steam' : null);
+export function toLinkedAccountLookupFields(
+  account: LinkedAccountLookupResponse,
+): Array<{ name: string; value: string; inline?: boolean }> {
   return [
     {
-      name: formatLinkedAccountHeading(platform),
-      value: formatLinkedAccountBlock({
-        platform,
-        username: account.linked_account_name ?? account.steam_name,
-        accountId: account.linked_account_id ?? account.steam_id,
-        emptyMessage: 'No linked account found.',
-      }),
+      name: 'Linked account',
+      value: formatLinkedAccountLookupHeader(account),
     },
     {
-      name: 'Linked Discord account',
-      value: account.discord_id
-        ? formatDiscordAccountBlock({
-            displayName: account.discord_display_name,
-            username: account.discord_username,
-            discordId: account.discord_id,
-          })
-        : 'No linked Discord account found.',
-    },
-    {
-      name: 'Registrations',
-      value: formatRegistrationLines(account.registrations),
+      name: discordAccountFieldTitle(account.discord_accounts.length),
+      value: formatLinkedDiscordHitLines(account),
     },
   ];
+}
+
+function linkedAccountFieldTitle(count: number): string {
+  return count === 1 ? 'Linked account record (1)' : `Linked account records (${count})`;
+}
+
+function discordAccountFieldTitle(count: number): string {
+  return count === 1 ? 'Discord account hit (1)' : `Discord account hits (${count})`;
+}
+
+function formatLinkedAccountHitLines(records: readonly LinkedAccountLookupHit[]): string {
+  if (!records.length) {
+    return 'No linked account records found for this Discord account.';
+  }
+
+  return records
+    .map((record, index) => {
+      const lines = [
+        `${index + 1}. Linked account`,
+        `Platform: ${formatSearchable(record.linked_platform ?? null)}`,
+        `Account ID: ${formatSearchable(record.linked_account_id)}`,
+        `Account name: ${formatSearchable(record.linked_account_name)}`,
+      ];
+      return lines.join('\n');
+    })
+    .join('\n\n');
+}
+
+function formatLinkedAccountLookupHeader(account: LinkedAccountLookupResponse): string {
+  return [
+    `Linked account ID: ${formatSearchable(account.linked_account_id)}`,
+    `Linked account name: ${formatSearchable(account.linked_account_name)}`,
+    `Linked platform: ${formatSearchable(account.linked_platform ?? null)}`,
+  ].join('\n');
+}
+
+function formatLinkedDiscordHitLines(account: LinkedAccountLookupResponse): string {
+  if (!account.discord_accounts.length) {
+    return 'No Discord accounts are linked to this account.';
+  }
+
+  return account.discord_accounts
+    .map((hit, index) => {
+      const lines = [
+        `${index + 1}. Discord account`,
+        `Discord ID: ${formatSearchable(hit.discord_id)}`,
+        `Discord username: ${formatSearchable(hit.discord_username)}`,
+      ];
+      if (hit.discord_display_name?.trim()) {
+        lines.push(`Display name: ${formatSearchable(hit.discord_display_name)}`);
+      }
+      return lines.join('\n');
+    })
+    .join('\n\n');
 }
 
 function roleUpdateLabel(intent: RoleIntent): string {
@@ -154,6 +181,6 @@ function roleUpdateLabel(intent: RoleIntent): string {
   }
 }
 
-function formatSearchable(value?: string | null): string {
-  return value?.trim() ? `\`${value.trim()}\`` : 'Unknown';
+function formatSearchable(value?: string | RegistrationPlatform | null): string {
+  return typeof value === 'string' && value.trim() ? `\`${value.trim()}\`` : 'Unknown';
 }

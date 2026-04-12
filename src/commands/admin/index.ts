@@ -6,7 +6,7 @@ import client from '../../client.js';
 import { ADMIN_SUBCOMMANDS, COMMAND_NAMES } from '../../config/constants.js';
 import { buildManualRegisterSubcommand, executeManualRegisterSubcommand } from './manual-register.js';
 import { buildLookupDiscordSubcommand, executeLookupDiscordSubcommand } from './lookup-discord.js';
-import { buildLookupSteamSubcommand, executeLookupSteamSubcommand } from './lookup-steam.js';
+import { buildLookupLinkedAccountSubcommand, executeLookupLinkedAccountSubcommand } from './lookup-linked-account.js';
 
 const services = new RegisterService(client);
 
@@ -15,7 +15,7 @@ export const data = new SlashCommandBuilder()
   .setDescription('Administrative auth commands.')
   .addSubcommand(buildManualRegisterSubcommand)
   .addSubcommand(buildLookupDiscordSubcommand)
-  .addSubcommand(buildLookupSteamSubcommand);
+  .addSubcommand(buildLookupLinkedAccountSubcommand);
 
 export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
   const allowed = await ensureCommandAccess(interaction, {
@@ -33,8 +33,8 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     case ADMIN_SUBCOMMANDS.lookupDiscord:
       await executeLookupDiscordSubcommand(interaction, services);
       return;
-    case ADMIN_SUBCOMMANDS.lookupSteam:
-      await executeLookupSteamSubcommand(interaction, services);
+    case ADMIN_SUBCOMMANDS.lookupLinkedAccount:
+      await executeLookupLinkedAccountSubcommand(interaction, services);
       return;
     default:
       await interaction.reply({ content: 'Unsupported admin subcommand.', ephemeral: true });
