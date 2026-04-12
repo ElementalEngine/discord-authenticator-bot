@@ -12,6 +12,8 @@ import {
   formatRoleUpdateLines,
 } from '../ui/formatters/registration-display.js';
 
+type LogContextValue = string | number | boolean | null | undefined;
+
 export class AuthLogService {
   constructor(private readonly client: Client) {}
 
@@ -170,14 +172,16 @@ export class AuthLogService {
     actorId?: string;
     subjectId?: string;
     error: unknown;
+    context?: Record<string, LogContextValue>;
   }): Promise<void> {
     const channel = await this.client.channels.fetch(config.discord.channels.authLog).catch(() => null);
     if (!channel?.isSendable()) return;
 
+    const contextValue = formatContextFields(input.context);
     const embed = new EmbedBuilder()
       .setTitle(`${EMOJIS.error} ${input.title}`)
       .setDescription(toSystemErrorMessage(input.error))
-      .addFields(...buildSystemActorFields(input.actorId, input.subjectId), {
+      .addFields(...buildSystemActorFields(input.actorId, input.subjectId), ...(contextValue ? [{ name: 'Context', value: contextValue }] : []), {
         name: 'Technical details',
         value: truncateFieldValue(toSystemErrorSummary(input.error)),
       });
@@ -207,6 +211,14 @@ function buildSystemActorFields(
     return [{ name: 'User', value: `<@${actorId}>`, inline: true }];
   }
   return [];
+}
+
+function formatContextFields(context?: Record<string, LogContextValue>): string | null {
+  if (!context) return null;
+  const lines = Object.entries(context)
+    .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== '')
+    .map(([key, value]) => `${key}: \`${String(value)}\``);
+  return lines.length ? truncateFieldValue(lines.join('\n')) : null;
 }
 
 function formatBoolean(

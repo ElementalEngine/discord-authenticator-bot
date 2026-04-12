@@ -1,6 +1,6 @@
 import { MessageFlags, SlashCommandSubcommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
-import { buildDiscordLookupEmbed } from '../../ui/embeds/register.js';
-import { toUserErrorMessage } from '../../utils/error-message.js';
+import { buildLookupDiscordEmbed } from '../../ui/embeds/register.js';
+import { shouldLogSystemError, toUserErrorMessage } from '../../utils/error-message.js';
 import type { RegisterService } from '../../services/register.service.js';
 
 const DISCORD_ID_RE = /^\d{17,20}$/;
@@ -8,7 +8,7 @@ const DISCORD_ID_RE = /^\d{17,20}$/;
 export function buildLookupDiscordSubcommand(): SlashCommandSubcommandBuilder {
   return new SlashCommandSubcommandBuilder()
     .setName('lookup-discord')
-    .setDescription('Look up a Discord account and its linked account records.')
+    .setDescription('Look up an account by Discord ID.')
     .addStringOption((option) => option.setName('discord-id').setDescription('Discord ID').setRequired(true));
 }
 
@@ -26,13 +26,16 @@ export async function executeLookupDiscordSubcommand(
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
   try {
     const account = await services.lookupByDiscordId(discordId);
-    await interaction.editReply({ embeds: [buildDiscordLookupEmbed(account)] });
+    await interaction.editReply({ embeds: [buildLookupDiscordEmbed(account)] });
   } catch (error) {
     await interaction.editReply({ content: toUserErrorMessage(error) });
-    await services.logs.logSystemError({
-      title: 'Lookup by Discord ID failed',
-      actorId: interaction.user.id,
-      error,
-    });
+    if (shouldLogSystemError(error)) {
+      await services.logs.logSystemError({
+        title: 'Lookup by Discord ID failed',
+        actorId: interaction.user.id,
+        error,
+        context: { discord_id: discordId },
+      });
+    }
   }
 }

@@ -3,7 +3,7 @@ import { GAME_CHOICES, REGISTRATION_PLATFORM_CHOICES } from '../../config/consta
 import type { SupportedGame } from '../../config/types.js';
 import { buildManualRegistrationSuccessEmbed } from '../../ui/embeds/register.js';
 import type { RegistrationPlatform } from '../../api/types.js';
-import { toUserErrorMessage } from '../../utils/error-message.js';
+import { shouldLogSystemError, toUserErrorMessage } from '../../utils/error-message.js';
 import type { RegisterService } from '../../services/register.service.js';
 
 const DISCORD_ID_RE = /^\d{17,20}$/;
@@ -117,11 +117,18 @@ export async function executeManualRegisterSubcommand(
     });
   } catch (error) {
     await interaction.editReply({ content: toUserErrorMessage(error) });
-    await services.logs.logSystemError({
-      title: 'Manual registration failed',
-      actorId: interaction.user.id,
-      subjectId: subject.id,
-      error,
-    });
+    if (shouldLogSystemError(error)) {
+      await services.logs.logSystemError({
+        title: 'Manual registration failed',
+        actorId: interaction.user.id,
+        subjectId: subject.id,
+        error,
+        context: {
+          game,
+          platform,
+          platform_account_id: platformAccountId,
+        },
+      });
+    }
   }
 }

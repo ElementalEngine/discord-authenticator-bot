@@ -10,12 +10,11 @@ import type { SupportedGame } from '../../config/types.js';
 import {
   formatDiscordAccountBlock,
   formatGameLabel,
-  formatLookupSummary,
   formatRoleUpdateLines,
   formatLinkedAccountBlock,
   formatLinkedAccountHeading,
-  toDiscordLookupFields,
-  toLinkedAccountLookupFields,
+  toLookupDiscordFields,
+  toLookupLinkedAccountFields,
 } from '../formatters/registration-display.js';
 
 export function buildRegistrationStartEmbed(input: {
@@ -26,28 +25,30 @@ export function buildRegistrationStartEmbed(input: {
     .setTitle('Welcome to CivPlayers Leagues')
     .setDescription(
       [
-        'Read the server rules and Discord’s **Terms of Service**, **Community Guidelines**, and **Partner Code of Conduct** before you continue.',
+        'Registration has started.',
         '',
-        'Use **Start Discord verification** below to begin Discord + Steam verification. This message updates automatically when the checks finish, showing either a clear confirmation or the reason registration could not be completed.',
+        'Step 1: Authorize with Discord using the button below.',
+        'Step 2: We check your linked account, game ownership, and eligibility.',
+        'Step 3: We complete your server registration and update your roles.',
       ].join('\n'),
     )
     .addFields(
       {
-        name: '📋 Before you begin',
+        name: 'Before you continue',
         value: [
           '**Link Steam to Discord**',
           'Settings → Connections → Steam → sign in → enable **Display on profile**',
           '',
-          '**Make your Steam profile public**',
+          '**Make your Steam profile visible enough for checks**',
           'Steam Community → Profile → Edit Profile → Privacy Settings',
-          'Set **Game details** to **Public** and turn off private playtime',
+          'Set **Game details** to **Public** and make sure playtime is visible',
           '',
-          '**Finish the browser verification**',
-          'Use the button below, complete the browser step, then return to this message.',
+          '**Complete the browser step**',
+          'Use the button below, finish the browser authorization, then return to this message.',
         ].join('\n'),
       },
       {
-        name: 'Registration',
+        name: 'Registration details',
         value: [
           `Game: **${formatGameLabel(input.game)}**`,
           `Session expires: <t:${Math.floor(new Date(input.expiresAt).getTime() / 1000)}:R>`,
@@ -56,10 +57,23 @@ export function buildRegistrationStartEmbed(input: {
       {
         name: 'Support',
         value: [
-          '• **Epic Games copy of Civ VI?** Type `s! egs`',
-          `• **Need help?** Ask <@&${config.discord.roles.moderator}> in <#${config.discord.channels.welcome}>`,
+          'If a check fails, this message will explain what happened and what to do next.',
+          `Need help? Ask <@&${config.discord.roles.moderator}> in <#${config.discord.channels.welcome}>.`,
         ].join('\n'),
       },
+    );
+}
+
+export function buildRegistrationValidatingEmbed(input: { game: SupportedGame }): EmbedBuilder {
+  return new EmbedBuilder()
+    .setTitle('Registration checks in progress')
+    .setDescription(
+      [
+        'Discord authorization is complete.',
+        '',
+        `We are now checking your linked account and eligibility for **${formatGameLabel(input.game)}**.`,
+        'No action is needed right now. This message will update again when the checks finish.',
+      ].join('\n'),
     );
 }
 
@@ -73,8 +87,8 @@ export function buildRegistrationSuccessEmbed(input: {
   roleIntents: readonly RoleIntent[];
 }): EmbedBuilder {
   return new EmbedBuilder()
-    .setTitle('Registration complete')
-    .setDescription('Your registration has been completed successfully and your CPL access has been updated.')
+    .setTitle('Registration completed')
+    .setDescription('Your account has been verified and your registration is complete.')
     .addFields(
       {
         name: 'Discord account',
@@ -90,10 +104,6 @@ export function buildRegistrationSuccessEmbed(input: {
       },
       { name: 'Game', value: formatGameLabel(input.game) },
       { name: 'Discord role updates', value: formatRoleUpdateLines(input.roleIntents) },
-      {
-        name: 'Next step',
-        value: `You’re ready to use the normal CPL channels and commands for **${formatGameLabel(input.game)}**.`,
-      },
     );
 }
 
@@ -108,8 +118,8 @@ export function buildManualRegistrationSuccessEmbed(input: {
   roleIntents: readonly RoleIntent[];
 }): EmbedBuilder {
   return new EmbedBuilder()
-    .setTitle('Manual registration complete')
-    .setDescription('The registration was completed successfully and the member’s CPL access has been updated.')
+    .setTitle('Manual registration completed')
+    .setDescription('The registration was completed successfully.')
     .addFields(
       {
         name: 'Discord account',
@@ -153,28 +163,14 @@ export function buildRegistrationFailureEmbed(message: string): EmbedBuilder {
     .setDescription(message);
 }
 
-export function buildDiscordLookupEmbed(account: DiscordLookupResponse): EmbedBuilder {
+export function buildLookupDiscordEmbed(account: DiscordLookupResponse): EmbedBuilder {
   return new EmbedBuilder()
-    .setTitle('Lookup by Discord ID')
-    .setDescription(
-      formatLookupSummary({
-        label: 'Linked account records found',
-        count: account.linked_accounts.length,
-        multipleWarning: 'Multiple linked account records found for this Discord account.',
-      }),
-    )
-    .addFields(...toDiscordLookupFields(account));
+    .setTitle('Account lookup — Discord ID')
+    .addFields(...toLookupDiscordFields(account));
 }
 
-export function buildLinkedAccountLookupEmbed(account: LinkedAccountLookupResponse): EmbedBuilder {
+export function buildLookupLinkedAccountEmbed(account: LinkedAccountLookupResponse): EmbedBuilder {
   return new EmbedBuilder()
-    .setTitle('Lookup by linked account ID')
-    .setDescription(
-      formatLookupSummary({
-        label: 'Discord accounts found',
-        count: account.discord_accounts.length,
-        multipleWarning: 'Multiple Discord accounts are tied to this linked account.',
-      }),
-    )
-    .addFields(...toLinkedAccountLookupFields(account));
+    .setTitle('Account lookup — linked account ID')
+    .addFields(...toLookupLinkedAccountFields(account));
 }

@@ -1,5 +1,6 @@
 import type {
   DiscordLookupResponse,
+  DiscordAccountLookupHit,
   LinkedAccountLookupHit,
   LinkedAccountLookupResponse,
   RegistrationPlatform,
@@ -9,8 +10,10 @@ import { ROLE_INTENTS } from '../../config/constants.js';
 import { config } from '../../config/index.js';
 import type { SupportedGame } from '../../config/types.js';
 
-export function formatGameLabel(game: SupportedGame): string {
-  return game === 'civ6' ? 'Civilization VI' : 'Civilization VII';
+export function formatGameLabel(game: SupportedGame | string): string {
+  if (game === 'civ6') return 'Civilization VI';
+  if (game === 'civ7') return 'Civilization VII';
+  return game;
 }
 
 export function formatDiscordAccountBlock(input: {
@@ -71,16 +74,7 @@ export function formatRoleUpdateLines(intents: readonly RoleIntent[]): string {
   return intents.map((intent) => `• ${roleUpdateLabel(intent)}`).join('\n');
 }
 
-export function formatLookupSummary(input: { label: string; count: number; multipleWarning: string }): string {
-  if (input.count > 1) {
-    return `${input.label}: ${input.count}\n⚠ ${input.multipleWarning}`;
-  }
-  return `${input.label}: ${input.count}`;
-}
-
-export function toDiscordLookupFields(
-  account: DiscordLookupResponse,
-): Array<{ name: string; value: string; inline?: boolean }> {
+export function toLookupDiscordFields(account: DiscordLookupResponse): Array<{ name: string; value: string; inline?: boolean }> {
   return [
     {
       name: 'Discord account',
@@ -91,78 +85,76 @@ export function toDiscordLookupFields(
       }),
     },
     {
-      name: linkedAccountFieldTitle(account.linked_accounts.length),
-      value: formatLinkedAccountHitLines(account.linked_accounts),
+      name: `Linked account records (${account.linked_accounts.length})`,
+      value: formatLinkedAccountHits(account.linked_accounts),
+    },
+    {
+      name: 'Summary',
+      value:
+        account.linked_accounts.length > 1
+          ? '⚠ Multiple linked account records were found for this Discord account.'
+          : account.linked_accounts.length === 1
+            ? 'One linked account record was found for this Discord account.'
+            : 'No linked account records were found for this Discord account.',
     },
   ];
 }
 
-export function toLinkedAccountLookupFields(
-  account: LinkedAccountLookupResponse,
-): Array<{ name: string; value: string; inline?: boolean }> {
+export function toLookupLinkedAccountFields(account: LinkedAccountLookupResponse): Array<{ name: string; value: string; inline?: boolean }> {
   return [
     {
       name: 'Linked account',
-      value: formatLinkedAccountLookupHeader(account),
+      value: formatLinkedAccountBlock({
+        platform: account.linked_platform,
+        username: account.linked_account_name,
+        accountId: account.linked_account_id,
+        emptyMessage: 'No linked account details were found.',
+      }),
     },
     {
-      name: discordAccountFieldTitle(account.discord_accounts.length),
-      value: formatLinkedDiscordHitLines(account),
+      name: `Discord account hits (${account.discord_accounts.length})`,
+      value: formatDiscordAccountHits(account.discord_accounts),
+    },
+    {
+      name: 'Summary',
+      value:
+        account.discord_accounts.length > 1
+          ? '⚠ Multiple Discord accounts are tied to this linked account.'
+          : account.discord_accounts.length === 1
+            ? 'One Discord account is tied to this linked account.'
+            : 'No Discord accounts are linked to this account.',
     },
   ];
 }
 
-function linkedAccountFieldTitle(count: number): string {
-  return count === 1 ? 'Linked account record (1)' : `Linked account records (${count})`;
-}
-
-function discordAccountFieldTitle(count: number): string {
-  return count === 1 ? 'Discord account hit (1)' : `Discord account hits (${count})`;
-}
-
-function formatLinkedAccountHitLines(records: readonly LinkedAccountLookupHit[]): string {
-  if (!records.length) {
-    return 'No linked account records found for this Discord account.';
+function formatLinkedAccountHits(hits: readonly LinkedAccountLookupHit[]): string {
+  if (!hits.length) {
+    return 'No linked account records found.';
   }
 
-  return records
-    .map((record, index) => {
-      const lines = [
-        `${index + 1}. Linked account`,
-        `Platform: ${formatSearchable(record.linked_platform ?? null)}`,
-        `Account ID: ${formatSearchable(record.linked_account_id)}`,
-        `Account name: ${formatSearchable(record.linked_account_name)}`,
-      ];
-      return lines.join('\n');
+  return hits
+    .map((hit, index) => {
+      const heading = `${index + 1}. ${formatLinkedAccountHeading(hit.linked_platform)}`;
+      return [heading, formatLinkedAccountBlock({
+        platform: hit.linked_platform,
+        username: hit.linked_account_name,
+        accountId: hit.linked_account_id,
+      })].join('\n');
     })
     .join('\n\n');
 }
 
-function formatLinkedAccountLookupHeader(account: LinkedAccountLookupResponse): string {
-  return [
-    `Linked account ID: ${formatSearchable(account.linked_account_id)}`,
-    `Linked account name: ${formatSearchable(account.linked_account_name)}`,
-    `Linked platform: ${formatSearchable(account.linked_platform ?? null)}`,
-  ].join('\n');
-}
-
-function formatLinkedDiscordHitLines(account: LinkedAccountLookupResponse): string {
-  if (!account.discord_accounts.length) {
-    return 'No Discord accounts are linked to this account.';
+function formatDiscordAccountHits(hits: readonly DiscordAccountLookupHit[]): string {
+  if (!hits.length) {
+    return 'No Discord accounts found.';
   }
 
-  return account.discord_accounts
-    .map((hit, index) => {
-      const lines = [
-        `${index + 1}. Discord account`,
-        `Discord ID: ${formatSearchable(hit.discord_id)}`,
-        `Discord username: ${formatSearchable(hit.discord_username)}`,
-      ];
-      if (hit.discord_display_name?.trim()) {
-        lines.push(`Display name: ${formatSearchable(hit.discord_display_name)}`);
-      }
-      return lines.join('\n');
-    })
+  return hits
+    .map((hit, index) => [`${index + 1}. Discord account`, formatDiscordAccountBlock({
+      displayName: hit.discord_display_name,
+      username: hit.discord_username,
+      discordId: hit.discord_id,
+    })].join('\n'))
     .join('\n\n');
 }
 
@@ -181,6 +173,6 @@ function roleUpdateLabel(intent: RoleIntent): string {
   }
 }
 
-function formatSearchable(value?: string | RegistrationPlatform | null): string {
-  return typeof value === 'string' && value.trim() ? `\`${value.trim()}\`` : 'Unknown';
+function formatSearchable(value?: string | null): string {
+  return value?.trim() ? `\`${value.trim()}\`` : 'Unknown';
 }

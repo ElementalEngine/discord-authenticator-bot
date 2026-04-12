@@ -7,9 +7,10 @@ import {
   buildRegistrationExpiredEmbed,
   buildRegistrationFailureEmbed,
   buildRegistrationSuccessEmbed,
+  buildRegistrationValidatingEmbed,
 } from '../ui/embeds/register.js';
 import { safeEditReply } from '../utils/discord-safe.js';
-import { stripLeadingStatusEmoji, toUserErrorMessage } from '../utils/error-message.js';
+import { shouldLogSystemError, stripLeadingStatusEmoji, toUserErrorMessage } from '../utils/error-message.js';
 import type { RegisterService } from './register.service.js';
 
 interface ActiveWatch {
@@ -17,6 +18,7 @@ interface ActiveWatch {
   expiresAtMs: number;
   statusRetries: number;
   completeRetries: number;
+  lastStatus?: RegistrationSessionStatusResponse['status'];
 }
 
 export class RegistrationSessionWatchService {
@@ -39,6 +41,7 @@ export class RegistrationSessionWatchService {
       expiresAtMs: Date.parse(input.expiresAt),
       statusRetries: 0,
       completeRetries: 0,
+      lastStatus: 'pending_auth',
     });
 
     this.schedule(input, 2500);
@@ -106,18 +109,31 @@ export class RegistrationSessionWatchService {
         embeds: [buildRegistrationFailureEmbed(stripLeadingStatusEmoji(toUserErrorMessage(error)))],
         components: clearComponents(),
       });
-      await this.registerService.logs.logSystemError({
-        title: 'Registration session polling failed',
-        actorId: input.user.id,
-        subjectId: input.user.id,
-        error,
-      });
+      if (shouldLogSystemError(error)) {
+        await this.registerService.logs.logSystemError({
+          title: 'Registration session polling failed',
+          actorId: input.user.id,
+          subjectId: input.user.id,
+          error,
+          context: { session_id: input.sessionId, game: input.game },
+        });
+      }
       return;
     }
 
     switch (session.status) {
       case 'pending_auth':
+        watch.lastStatus = session.status;
+        this.schedule(input, 2500);
+        return;
       case 'validating':
+        if (watch.lastStatus !== 'validating') {
+          await safeEditReply(input.interaction, {
+            embeds: [buildRegistrationValidatingEmbed({ game: input.game })],
+            components: clearComponents(),
+          });
+        }
+        watch.lastStatus = session.status;
         this.schedule(input, 2500);
         return;
       case 'validated':
@@ -161,12 +177,15 @@ export class RegistrationSessionWatchService {
             embeds: [buildRegistrationFailureEmbed(stripLeadingStatusEmoji(toUserErrorMessage(error)))],
             components: clearComponents(),
           });
-          await this.registerService.logs.logSystemError({
-            title: 'Registration auto-complete failed',
-            actorId: input.user.id,
-            subjectId: input.user.id,
-            error,
-          });
+          if (shouldLogSystemError(error)) {
+            await this.registerService.logs.logSystemError({
+              title: 'Registration auto-complete failed',
+              actorId: input.user.id,
+              subjectId: input.user.id,
+              error,
+              context: { session_id: input.sessionId, game: input.game },
+            });
+          }
           return;
         }
       case 'failed':
