@@ -39,6 +39,9 @@ export function toUserErrorMessage(error: unknown): string {
       case 'ROLE_SYNC_CONFIG_ERROR':
         return `${EMOJIS.error} I cannot update the required Discord roles right now. Please contact staff.`;
       default:
+        if (error.status >= 500) {
+          return `${EMOJIS.warning} The auth service hit an unexpected backend error. Please try again shortly.`;
+        }
         return `${EMOJIS.error} ${error.message}`;
     }
   }
@@ -50,6 +53,19 @@ export function toUserErrorMessage(error: unknown): string {
   return `${EMOJIS.error} Something went wrong.`;
 }
 
+export function toSystemErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.status >= 500) {
+      return 'Backend request failed unexpectedly.';
+    }
+    return error.message;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return 'Unexpected error.';
+}
+
 export function toSystemErrorSummary(error: unknown): string {
   if (error instanceof ApiError) {
     return `${error.code} (${error.status})${error.correlationId ? ` [${error.correlationId}]` : ''}: ${error.message}`;
@@ -58,4 +74,8 @@ export function toSystemErrorSummary(error: unknown): string {
     return error.stack ?? `${error.name}: ${error.message}`;
   }
   return String(error);
+}
+
+export function stripLeadingStatusEmoji(message: string): string {
+  return message.replace(/^(?:⚠️|❌|✅|ℹ️)\s*/u, '').trim();
 }

@@ -9,7 +9,7 @@ import {
   buildRegistrationSuccessEmbed,
 } from '../ui/embeds/register.js';
 import { safeEditReply } from '../utils/discord-safe.js';
-import { toUserErrorMessage } from '../utils/error-message.js';
+import { stripLeadingStatusEmoji, toUserErrorMessage } from '../utils/error-message.js';
 import type { RegisterService } from './register.service.js';
 
 interface ActiveWatch {
@@ -17,7 +17,6 @@ interface ActiveWatch {
   expiresAtMs: number;
   statusRetries: number;
   completeRetries: number;
-  authenticatedLogged: boolean;
 }
 
 export class RegistrationSessionWatchService {
@@ -40,7 +39,6 @@ export class RegistrationSessionWatchService {
       expiresAtMs: Date.parse(input.expiresAt),
       statusRetries: 0,
       completeRetries: 0,
-      authenticatedLogged: false,
     });
 
     this.schedule(input, 2500);
@@ -105,8 +103,7 @@ export class RegistrationSessionWatchService {
 
       this.stop(input.sessionId);
       await safeEditReply(input.interaction, {
-        content: toUserErrorMessage(error),
-        embeds: [],
+        embeds: [buildRegistrationFailureEmbed(stripLeadingStatusEmoji(toUserErrorMessage(error)))],
         components: clearComponents(),
       });
       await this.registerService.logs.logSystemError({
@@ -124,16 +121,6 @@ export class RegistrationSessionWatchService {
         this.schedule(input, 2500);
         return;
       case 'validated':
-        if (!watch.authenticatedLogged) {
-          watch.authenticatedLogged = true;
-          await this.registerService.logAuthenticationCompleted({
-            session,
-            game: input.game,
-            user: input.user,
-            member: input.member,
-          }).catch(() => undefined);
-        }
-
         try {
           const result = await this.registerService.completeSelfServiceRegistration({
             sessionId: input.sessionId,
@@ -141,6 +128,12 @@ export class RegistrationSessionWatchService {
             member: input.member,
           });
           this.stop(input.sessionId);
+          await this.registerService.logAuthenticationCompleted({
+            session,
+            game: input.game,
+            user: input.user,
+            member: input.member,
+          }).catch(() => undefined);
           await safeEditReply(input.interaction, {
             embeds: [
               buildRegistrationSuccessEmbed({
@@ -165,8 +158,7 @@ export class RegistrationSessionWatchService {
 
           this.stop(input.sessionId);
           await safeEditReply(input.interaction, {
-            content: toUserErrorMessage(error),
-            embeds: [],
+            embeds: [buildRegistrationFailureEmbed(stripLeadingStatusEmoji(toUserErrorMessage(error)))],
             components: clearComponents(),
           });
           await this.registerService.logs.logSystemError({

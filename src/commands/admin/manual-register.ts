@@ -25,6 +25,7 @@ export function buildManualRegisterSubcommand(): SlashCommandSubcommandBuilder {
         .addChoices(...REGISTRATION_PLATFORM_CHOICES),
     )
     .addStringOption((option) => option.setName('account-id').setDescription('Platform account ID').setRequired(true))
+    .addStringOption((option) => option.setName('account-name').setDescription('Platform account name').setRequired(false))
     .addStringOption((option) => option.setName('reason').setDescription('Audit reason').setRequired(true));
 }
 
@@ -36,6 +37,7 @@ export async function executeManualRegisterSubcommand(
   const game = interaction.options.getString('game', true) as SupportedGame;
   const platform = interaction.options.getString('platform', true) as RegistrationPlatform;
   const accountId = interaction.options.getString('account-id', true).trim();
+  const accountName = interaction.options.getString('account-name', false)?.trim() ?? null;
   const reason = interaction.options.getString('reason', true).trim();
 
   if (!DISCORD_ID_RE.test(discordId)) {
@@ -75,6 +77,7 @@ export async function executeManualRegisterSubcommand(
       platform,
       accountId,
       reason,
+      accountName,
     });
 
     await interaction.editReply({

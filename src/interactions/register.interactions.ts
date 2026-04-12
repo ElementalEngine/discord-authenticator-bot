@@ -8,7 +8,7 @@ import {
 } from '../ui/embeds/register.js';
 import { clearComponents } from '../ui/components/register.js';
 import { safeEditReply } from '../utils/discord-safe.js';
-import { toUserErrorMessage } from '../utils/error-message.js';
+import { stripLeadingStatusEmoji, toUserErrorMessage } from '../utils/error-message.js';
 
 function getSessionId(customId: string, prefix: string): string | null {
   if (!customId.startsWith(prefix)) return null;
@@ -57,7 +57,7 @@ export async function handleRegisterInteraction(
       });
     } catch (error) {
       await safeEditReply(interaction, {
-        embeds: [buildRegistrationFailureEmbed(toUserErrorMessage(error).replace(/^⚠️\s?|^❌\s?/, ''))],
+        embeds: [buildRegistrationFailureEmbed(stripLeadingStatusEmoji(toUserErrorMessage(error)))],
         components: clearComponents(),
       });
       await services.logs.logSystemError({

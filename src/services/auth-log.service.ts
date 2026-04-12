@@ -3,7 +3,7 @@ import type { RegistrationPlatform, RoleIntent } from '../api/types.js';
 import { config } from '../config/index.js';
 import { EMOJIS } from '../config/constants.js';
 import type { SupportedGame } from '../config/types.js';
-import { toSystemErrorSummary } from '../utils/error-message.js';
+import { toSystemErrorMessage, toSystemErrorSummary } from '../utils/error-message.js';
 import {
   formatDiscordAccountBlock,
   formatGameLabel,
@@ -175,9 +175,12 @@ export class AuthLogService {
     if (!channel?.isSendable()) return;
 
     const embed = new EmbedBuilder()
-      .setTitle(input.title)
-      .setDescription(toSystemErrorSummary(input.error))
-      .addFields(...buildSystemActorFields(input.actorId, input.subjectId));
+      .setTitle(`${EMOJIS.error} ${input.title}`)
+      .setDescription(toSystemErrorMessage(input.error))
+      .addFields(...buildSystemActorFields(input.actorId, input.subjectId), {
+        name: 'Technical details',
+        value: truncateFieldValue(toSystemErrorSummary(input.error)),
+      });
 
     await channel.send({ embeds: [embed] });
   }
@@ -213,4 +216,8 @@ function formatBoolean(
   if (value === true) return labels.trueLabel ?? 'Yes';
   if (value === false) return labels.falseLabel ?? 'No';
   return 'Unknown';
+}
+
+function truncateFieldValue(value: string): string {
+  return value.length > 1024 ? `${value.slice(0, 1021)}...` : value;
 }

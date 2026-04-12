@@ -92,6 +92,6 @@ export interface AccountLookupResponse {
   linked_account_id?: string | null;
   linked_account_name?: string | null;
   registrations: Partial<Record<SupportedGame, AccountRegistrationRecord>>;
-  created_at?: string;
-  updated_at?: string;
+  first_registered_at?: string;
+  record_version?: number | null;
 }

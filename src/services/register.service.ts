@@ -86,6 +86,7 @@ export class RegisterService {
     platform: RegistrationPlatform;
     accountId: string;
     reason: string;
+    accountName?: string | null;
   }): Promise<RegistrationOperationResponse> {
     const operation = await this.api.manualRegister({
       actor_discord_id: input.actor.id,
@@ -94,6 +95,9 @@ export class RegisterService {
       account_id: input.accountId,
       game: input.game,
       reason: input.reason,
+      account_name: input.accountName ?? null,
+      discord_username: input.subject.username,
+      discord_display_name: input.member.displayName,
     });
 
     return this.applyAndFinalize({
