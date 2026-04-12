@@ -88,9 +88,12 @@ export class ApiClient {
     actor_discord_id: string;
     subject_discord_id: string;
     platform: RegistrationPlatform;
-    account_id: string;
+    platform_account_id: string;
     game: SupportedGame;
     reason: string;
+    platform_account_name?: string | null;
+    discord_username?: string | null;
+    discord_display_name?: string | null;
   }): Promise<RegistrationOperationResponse> {
     return this.requestJson<RegistrationOperationResponse>(
       '/api/v1/auth/admin/manual-registrations',

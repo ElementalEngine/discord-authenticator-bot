@@ -14,6 +14,7 @@ export function buildManualRegisterSubcommand(): SlashCommandSubcommandBuilder {
     .setName('manual-register')
     .setDescription('Create a manual registration for a Discord ID.')
     .addStringOption((option) => option.setName('discord-id').setDescription('Target Discord ID').setRequired(true))
+    .addStringOption((option) => option.setName('discord-username').setDescription('Discord username').setRequired(true))
     .addStringOption((option) =>
       option.setName('game').setDescription('Game to register').setRequired(true).addChoices(...GAME_CHOICES),
     )
@@ -24,8 +25,8 @@ export function buildManualRegisterSubcommand(): SlashCommandSubcommandBuilder {
         .setRequired(true)
         .addChoices(...REGISTRATION_PLATFORM_CHOICES),
     )
-    .addStringOption((option) => option.setName('account-id').setDescription('Platform account ID').setRequired(true))
-    .addStringOption((option) => option.setName('account-name').setDescription('Platform account name').setRequired(false))
+    .addStringOption((option) => option.setName('platform-account-id').setDescription('Platform account ID').setRequired(true))
+    .addStringOption((option) => option.setName('platform-account-name').setDescription('Platform account name').setRequired(false))
     .addStringOption((option) => option.setName('reason').setDescription('Audit reason').setRequired(true));
 }
 
@@ -34,10 +35,11 @@ export async function executeManualRegisterSubcommand(
   services: RegisterService,
 ): Promise<void> {
   const discordId = interaction.options.getString('discord-id', true).trim();
+  const discordUsername = interaction.options.getString('discord-username', true).trim();
   const game = interaction.options.getString('game', true) as SupportedGame;
   const platform = interaction.options.getString('platform', true) as RegistrationPlatform;
-  const accountId = interaction.options.getString('account-id', true).trim();
-  const accountName = interaction.options.getString('account-name', false)?.trim() ?? null;
+  const platformAccountId = interaction.options.getString('platform-account-id', true).trim();
+  const platformAccountName = interaction.options.getString('platform-account-name', false)?.trim() ?? null;
   const reason = interaction.options.getString('reason', true).trim();
 
   if (!DISCORD_ID_RE.test(discordId)) {
@@ -45,7 +47,13 @@ export async function executeManualRegisterSubcommand(
     return;
   }
 
-  if (platform === 'steam' && !STEAM_ID_RE.test(accountId)) {
+
+  if (!discordUsername) {
+    await interaction.reply({ content: 'Discord username must not be blank.', flags: MessageFlags.Ephemeral });
+    return;
+  }
+
+  if (platform === 'steam' && !STEAM_ID_RE.test(platformAccountId)) {
     await interaction.reply({ content: 'Steam account ID must be numeric.', flags: MessageFlags.Ephemeral });
     return;
   }
@@ -75,9 +83,10 @@ export async function executeManualRegisterSubcommand(
       member,
       game,
       platform,
-      accountId,
+      accountId: platformAccountId,
       reason,
-      accountName,
+      accountName: platformAccountName,
+      discordUsername,
     });
 
     await interaction.editReply({
@@ -85,10 +94,10 @@ export async function executeManualRegisterSubcommand(
         buildManualRegistrationSuccessEmbed({
           game: result.game,
           platform: result.linked_platform ?? platform,
-          accountId: result.linked_account_id ?? accountId,
-          accountName: result.linked_account_name ?? null,
+          accountId: result.linked_account_id ?? platformAccountId,
+          accountName: result.linked_account_name ?? platformAccountName,
           discordId: subject.id,
-          discordUsername: subject.username,
+          discordUsername,
           discordDisplayName: member.displayName,
           roleIntents: result.role_intents,
         }),

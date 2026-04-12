@@ -87,16 +87,17 @@ export class RegisterService {
     accountId: string;
     reason: string;
     accountName?: string | null;
+    discordUsername: string;
   }): Promise<RegistrationOperationResponse> {
     const operation = await this.api.manualRegister({
       actor_discord_id: input.actor.id,
       subject_discord_id: input.subject.id,
       platform: input.platform,
-      account_id: input.accountId,
+      platform_account_id: input.accountId,
       game: input.game,
       reason: input.reason,
-      account_name: input.accountName ?? null,
-      discord_username: input.subject.username,
+      platform_account_name: input.accountName ?? null,
+      discord_username: input.discordUsername,
       discord_display_name: input.member.displayName,
     });
 
@@ -107,6 +108,7 @@ export class RegisterService {
       member: input.member,
       mode: 'manual',
       manualReason: input.reason,
+      resolvedDiscordUsername: input.discordUsername,
     });
   }
 
@@ -144,6 +146,7 @@ export class RegisterService {
     member: GuildMember;
     mode: RegistrationMode;
     manualReason?: string;
+    resolvedDiscordUsername?: string;
   }): Promise<RegistrationOperationResponse> {
     try {
       const sync = await this.roleSync.applyRoleIntents(input.member, input.operation.role_intents);
@@ -157,13 +160,14 @@ export class RegisterService {
       const linkedPlatform = input.operation.linked_platform ?? 'steam';
       const linkedAccountId = input.operation.linked_account_id ?? input.operation.steam_id;
       const linkedAccountName = input.operation.linked_account_name ?? input.operation.steam_name ?? null;
+      const resolvedDiscordUsername = input.resolvedDiscordUsername ?? input.subject.username;
 
       if (input.mode === 'manual') {
         await this.logs.logManualRegistrationCompleted({
           actorId: input.actor.id,
           subjectId: input.subject.id,
           discordDisplayName: input.member.displayName,
-          discordUsername: input.subject.username,
+          discordUsername: resolvedDiscordUsername,
           linkedPlatform,
           accountId: linkedAccountId,
           accountName: linkedAccountName,
@@ -175,7 +179,7 @@ export class RegisterService {
           actorId: input.actor.id,
           subjectId: input.subject.id,
           discordDisplayName: input.member.displayName,
-          discordUsername: input.subject.username,
+          discordUsername: resolvedDiscordUsername,
           game: input.operation.game,
           linkedPlatform,
           accountId: linkedAccountId,
@@ -188,7 +192,7 @@ export class RegisterService {
           actorId: input.actor.id,
           subjectId: input.subject.id,
           discordDisplayName: input.member.displayName,
-          discordUsername: input.subject.username,
+          discordUsername: resolvedDiscordUsername,
           game: input.operation.game,
           appliedRoleIntents: sync.applied,
         });
@@ -197,7 +201,7 @@ export class RegisterService {
           actorId: input.actor.id,
           subjectId: input.subject.id,
           discordDisplayName: input.member.displayName,
-          discordUsername: input.subject.username,
+          discordUsername: resolvedDiscordUsername,
           game: input.operation.game,
           linkedPlatform,
           accountId: linkedAccountId,
