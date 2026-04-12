@@ -25,9 +25,13 @@ export function buildManualRegisterSubcommand(): SlashCommandSubcommandBuilder {
         .setRequired(true)
         .addChoices(...REGISTRATION_PLATFORM_CHOICES),
     )
-    .addStringOption((option) => option.setName('platform-account-id').setDescription('Platform account ID').setRequired(true))
-    .addStringOption((option) => option.setName('platform-account-name').setDescription('Platform account name').setRequired(false))
-    .addStringOption((option) => option.setName('reason').setDescription('Audit reason').setRequired(true));
+    .addStringOption((option) =>
+      option.setName('platform-account-id').setDescription('Platform account ID').setRequired(true),
+    )
+    .addStringOption((option) =>
+      option.setName('platform-account-name').setDescription('Platform account name').setRequired(true),
+    )
+    .addStringOption((option) => option.setName('reason').setDescription('Audit reason').setRequired(false));
 }
 
 export async function executeManualRegisterSubcommand(
@@ -39,17 +43,21 @@ export async function executeManualRegisterSubcommand(
   const game = interaction.options.getString('game', true) as SupportedGame;
   const platform = interaction.options.getString('platform', true) as RegistrationPlatform;
   const platformAccountId = interaction.options.getString('platform-account-id', true).trim();
-  const platformAccountName = interaction.options.getString('platform-account-name', false)?.trim() ?? null;
-  const reason = interaction.options.getString('reason', true).trim();
+  const platformAccountName = interaction.options.getString('platform-account-name', true).trim();
+  const reason = interaction.options.getString('reason', false)?.trim() || undefined;
 
   if (!DISCORD_ID_RE.test(discordId)) {
     await interaction.reply({ content: 'Discord ID must be numeric.', flags: MessageFlags.Ephemeral });
     return;
   }
 
-
   if (!discordUsername) {
     await interaction.reply({ content: 'Discord username must not be blank.', flags: MessageFlags.Ephemeral });
+    return;
+  }
+
+  if (!platformAccountName) {
+    await interaction.reply({ content: 'Platform account name must not be blank.', flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -59,7 +67,10 @@ export async function executeManualRegisterSubcommand(
   }
 
   if (!interaction.inCachedGuild()) {
-    await interaction.reply({ content: 'Guild member cache is unavailable. Please try again.', flags: MessageFlags.Ephemeral });
+    await interaction.reply({
+      content: 'Guild member cache is unavailable. Please try again.',
+      flags: MessageFlags.Ephemeral,
+    });
     return;
   }
 
@@ -76,6 +87,7 @@ export async function executeManualRegisterSubcommand(
   }
 
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
   try {
     const result = await services.manualRegister({
       actor: interaction.user,
@@ -84,9 +96,9 @@ export async function executeManualRegisterSubcommand(
       game,
       platform,
       accountId: platformAccountId,
-      reason,
       accountName: platformAccountName,
       discordUsername,
+      reason,
     });
 
     await interaction.editReply({

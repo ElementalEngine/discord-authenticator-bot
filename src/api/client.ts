@@ -89,9 +89,9 @@ export class ApiClient {
     subject_discord_id: string;
     platform: RegistrationPlatform;
     platform_account_id: string;
+    platform_account_name: string;
     game: SupportedGame;
-    reason: string;
-    platform_account_name?: string | null;
+    reason?: string;
     discord_username?: string | null;
     discord_display_name?: string | null;
   }): Promise<RegistrationOperationResponse> {
@@ -121,6 +121,7 @@ export class ApiClient {
   private async requestJson<T>(path: string, init: RequestInit): Promise<T> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
+
     try {
       const response = await this.fetcher(`${this.baseUrl}${path}`, {
         ...init,
@@ -151,6 +152,7 @@ export class ApiClient {
           retryable: true,
         });
       }
+
       throw new ApiError({
         message: 'Failed to reach the auth backend.',
         code: 'BACKEND_UNAVAILABLE',
@@ -175,6 +177,7 @@ function tryParseJson(value: string): unknown {
 function toApiError(status: number, parsed: unknown): ApiError {
   const envelope = parsed as ApiErrorEnvelope | null;
   const error = envelope?.error ?? envelope?.detail?.error;
+
   if (error?.code && error?.message) {
     return new ApiError({
       message: error.message,
