@@ -1,13 +1,7 @@
 import { MessageFlags, SlashCommandSubcommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
 import { buildLookupDiscordEmbed } from '../../ui/embeds/register.js';
-import {
-  authLogSeverity,
-  shouldLogAuthIssue,
-  shouldLogSystemError,
-  stripLeadingStatusEmoji,
-  toSystemErrorSummary,
-  toUserErrorMessage,
-} from '../../utils/error-message.js';
+import { toUserErrorMessage } from '../../utils/error-message.js';
+import { logAuthCommandFailure } from '../../utils/auth-command-failure.js';
 import type { RegisterService } from '../../services/register.service.js';
 
 const DISCORD_ID_RE = /^\d{17,20}$/;
@@ -37,22 +31,13 @@ export async function executeLookupDiscordSubcommand(
   } catch (error) {
     const userMessage = toUserErrorMessage(error);
     await interaction.editReply({ content: userMessage });
-    if (shouldLogSystemError(error)) {
-      await services.logs.logSystemError({
-        title: 'Lookup by Discord ID failed',
-        actorId: interaction.user.id,
-        error,
-        context: { discord_id: discordId },
-      });
-    } else if (shouldLogAuthIssue(error)) {
-      await services.logs.logAuthIssue({
-        title: 'Lookup by Discord ID returned no result',
-        actorId: interaction.user.id,
-        message: stripLeadingStatusEmoji(userMessage),
-        severity: authLogSeverity(error),
-        technicalDetails: toSystemErrorSummary(error),
-        context: { discord_id: discordId },
-      });
-    }
+    await logAuthCommandFailure({
+      logs: services.logs,
+      title: 'Lookup by Discord ID failed',
+      actorId: interaction.user.id,
+      error,
+      userMessage,
+      context: { discord_id: discordId },
+    });
   }
 }

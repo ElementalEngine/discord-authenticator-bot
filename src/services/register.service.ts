@@ -27,6 +27,13 @@ type FinalizableOperation = Pick<
   | 'role_intents'
 >;
 
+interface FinalizedOperationContext {
+  linkedPlatform: RegistrationPlatform;
+  linkedAccountId: string;
+  linkedAccountName: string | null;
+  resolvedDiscordUsername: string;
+}
+
 export class RegisterService {
   readonly api: ApiClient;
   readonly roleSync: RoleSyncService;
@@ -150,6 +157,34 @@ export class RegisterService {
     manualReason?: string;
     resolvedDiscordUsername?: string;
   }): Promise<RegistrationOperationResponse> {
+    const sync = await this.finalizeOperationWithRoleSync(input);
+    const context = this.buildFinalizedOperationContext(input);
+
+    await this.logFinalizedOperation({
+      ...input,
+      ...context,
+      appliedRoleIntents: sync.applied,
+    }).catch((error) => {
+      console.warn('Post-finalize auth logging failed', {
+        operationId: input.operation.operation_id,
+        mode: input.mode,
+        error,
+      });
+    });
+
+    return {
+      ...input.operation,
+      linked_platform: context.linkedPlatform,
+      linked_account_id: context.linkedAccountId,
+      linked_account_name: context.linkedAccountName,
+      role_intents: sync.applied,
+    };
+  }
+
+  private async finalizeOperationWithRoleSync(input: {
+    operation: FinalizableOperation;
+    member: GuildMember;
+  }): Promise<{ applied: RegistrationOperationResponse['role_intents'] }> {
     try {
       const sync = await this.roleSync.applyRoleIntents(input.member, input.operation.role_intents);
       await this.api.finalizeRegistrationOperation(input.operation.operation_id, {
@@ -158,68 +193,7 @@ export class RegisterService {
         failure_code: null,
         failure_message: null,
       });
-
-      const linkedPlatform = input.operation.linked_platform ?? 'steam';
-      const linkedAccountId = input.operation.linked_account_id ?? input.operation.steam_id;
-      const linkedAccountName = input.operation.linked_account_name ?? input.operation.steam_name ?? null;
-      const resolvedDiscordUsername = input.resolvedDiscordUsername ?? input.subject.username;
-
-      if (input.mode === 'manual') {
-        await this.logs.logManualRegistrationCompleted({
-          actorId: input.actor.id,
-          subjectId: input.subject.id,
-          discordDisplayName: input.member.displayName,
-          discordUsername: resolvedDiscordUsername,
-          linkedPlatform,
-          accountId: linkedAccountId,
-          accountName: linkedAccountName,
-          game: input.operation.game,
-          reason: input.manualReason ?? 'No reason provided.',
-        });
-
-        await this.logs.logRegistrationResult({
-          actorId: input.actor.id,
-          subjectId: input.subject.id,
-          discordDisplayName: input.member.displayName,
-          discordUsername: resolvedDiscordUsername,
-          game: input.operation.game,
-          linkedPlatform,
-          accountId: linkedAccountId,
-          accountName: linkedAccountName,
-          appliedRoleIntents: sync.applied,
-          mode: 'manual',
-        });
-      } else if (input.mode === 'rank-role') {
-        await this.logs.logRankRoleResult({
-          actorId: input.actor.id,
-          subjectId: input.subject.id,
-          discordDisplayName: input.member.displayName,
-          discordUsername: resolvedDiscordUsername,
-          game: input.operation.game,
-          appliedRoleIntents: sync.applied,
-        });
-      } else {
-        await this.logs.logRegistrationResult({
-          actorId: input.actor.id,
-          subjectId: input.subject.id,
-          discordDisplayName: input.member.displayName,
-          discordUsername: resolvedDiscordUsername,
-          game: input.operation.game,
-          linkedPlatform,
-          accountId: linkedAccountId,
-          accountName: linkedAccountName,
-          appliedRoleIntents: sync.applied,
-          mode: 'self-service',
-        });
-      }
-
-      return {
-        ...input.operation,
-        linked_platform: linkedPlatform,
-        linked_account_id: linkedAccountId,
-        linked_account_name: linkedAccountName,
-        role_intents: sync.applied,
-      };
+      return sync;
     } catch (error) {
       const failure = toFinalizeFailure(error);
       await this.api
@@ -232,6 +206,86 @@ export class RegisterService {
         .catch(() => undefined);
       throw error;
     }
+  }
+
+  private buildFinalizedOperationContext(input: {
+    operation: FinalizableOperation;
+    subject: User;
+    resolvedDiscordUsername?: string;
+  }): FinalizedOperationContext {
+    return {
+      linkedPlatform: input.operation.linked_platform ?? 'steam',
+      linkedAccountId: input.operation.linked_account_id ?? input.operation.steam_id,
+      linkedAccountName: input.operation.linked_account_name ?? input.operation.steam_name ?? null,
+      resolvedDiscordUsername: input.resolvedDiscordUsername ?? input.subject.username,
+    };
+  }
+
+  private async logFinalizedOperation(input: {
+    operation: FinalizableOperation;
+    actor: User;
+    subject: User;
+    member: GuildMember;
+    mode: RegistrationMode;
+    manualReason?: string;
+    linkedPlatform: RegistrationPlatform;
+    linkedAccountId: string;
+    linkedAccountName: string | null;
+    resolvedDiscordUsername: string;
+    appliedRoleIntents: readonly RegistrationOperationResponse['role_intents'][number][];
+  }): Promise<void> {
+    if (input.mode === 'manual') {
+      await this.logs.logManualRegistrationCompleted({
+        actorId: input.actor.id,
+        subjectId: input.subject.id,
+        discordDisplayName: input.member.displayName,
+        discordUsername: input.resolvedDiscordUsername,
+        linkedPlatform: input.linkedPlatform,
+        accountId: input.linkedAccountId,
+        accountName: input.linkedAccountName,
+        game: input.operation.game,
+        reason: input.manualReason ?? 'No reason provided.',
+      });
+
+      await this.logs.logRegistrationResult({
+        actorId: input.actor.id,
+        subjectId: input.subject.id,
+        discordDisplayName: input.member.displayName,
+        discordUsername: input.resolvedDiscordUsername,
+        game: input.operation.game,
+        linkedPlatform: input.linkedPlatform,
+        accountId: input.linkedAccountId,
+        accountName: input.linkedAccountName,
+        appliedRoleIntents: input.appliedRoleIntents,
+        mode: 'manual',
+      });
+      return;
+    }
+
+    if (input.mode === 'rank-role') {
+      await this.logs.logRankRoleResult({
+        actorId: input.actor.id,
+        subjectId: input.subject.id,
+        discordDisplayName: input.member.displayName,
+        discordUsername: input.resolvedDiscordUsername,
+        game: input.operation.game,
+        appliedRoleIntents: input.appliedRoleIntents,
+      });
+      return;
+    }
+
+    await this.logs.logRegistrationResult({
+      actorId: input.actor.id,
+      subjectId: input.subject.id,
+      discordDisplayName: input.member.displayName,
+      discordUsername: input.resolvedDiscordUsername,
+      game: input.operation.game,
+      linkedPlatform: input.linkedPlatform,
+      accountId: input.linkedAccountId,
+      accountName: input.linkedAccountName,
+      appliedRoleIntents: input.appliedRoleIntents,
+      mode: 'self-service',
+    });
   }
 }
 

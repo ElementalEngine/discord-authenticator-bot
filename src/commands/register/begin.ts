@@ -3,14 +3,8 @@ import { GAME_CHOICES } from '../../config/constants.js';
 import type { SupportedGame } from '../../config/types.js';
 import { buildRegistrationStartEmbed } from '../../ui/embeds/register.js';
 import { buildRegistrationButtons } from '../../ui/components/register.js';
-import {
-  authLogSeverity,
-  shouldLogAuthIssue,
-  shouldLogSystemError,
-  stripLeadingStatusEmoji,
-  toSystemErrorSummary,
-  toUserErrorMessage,
-} from '../../utils/error-message.js';
+import { toUserErrorMessage } from '../../utils/error-message.js';
+import { logAuthCommandFailure } from '../../utils/auth-command-failure.js';
 import type { RegisterService } from '../../services/register.service.js';
 import { RegistrationSessionWatchService } from '../../services/registration-session-watch.service.js';
 import { config } from '../../config/index.js';
@@ -78,24 +72,14 @@ export async function executeBeginSubcommand(
   } catch (error) {
     const userMessage = toUserErrorMessage(error);
     await interaction.editReply({ content: userMessage });
-    if (shouldLogSystemError(error)) {
-      await services.logs.logSystemError({
-        title: 'Registration start failed',
-        actorId: interaction.user.id,
-        subjectId: interaction.user.id,
-        error,
-        context: { game },
-      });
-    } else if (shouldLogAuthIssue(error)) {
-      await services.logs.logAuthIssue({
-        title: 'Registration start blocked',
-        actorId: interaction.user.id,
-        subjectId: interaction.user.id,
-        message: stripLeadingStatusEmoji(userMessage),
-        severity: authLogSeverity(error),
-        technicalDetails: toSystemErrorSummary(error),
-        context: { game },
-      });
-    }
+    await logAuthCommandFailure({
+      logs: services.logs,
+      title: 'Registration start failed',
+      actorId: interaction.user.id,
+      subjectId: interaction.user.id,
+      error,
+      userMessage,
+      context: { game },
+    });
   }
 }

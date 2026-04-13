@@ -8,14 +8,8 @@ import {
 } from '../ui/embeds/register.js';
 import { clearComponents } from '../ui/components/register.js';
 import { safeEditReply } from '../utils/discord-safe.js';
-import {
-  authLogSeverity,
-  shouldLogAuthIssue,
-  shouldLogSystemError,
-  stripLeadingStatusEmoji,
-  toSystemErrorSummary,
-  toUserErrorMessage,
-} from '../utils/error-message.js';
+import { stripLeadingStatusEmoji, toUserErrorMessage } from '../utils/error-message.js';
+import { logAuthCommandFailure } from '../utils/auth-command-failure.js';
 
 function getSessionId(customId: string, prefix: string): string | null {
   if (!customId.startsWith(prefix)) return null;
@@ -68,25 +62,15 @@ export async function handleRegisterInteraction(
         embeds: [buildRegistrationFailureEmbed(stripLeadingStatusEmoji(userMessage))],
         components: clearComponents(),
       });
-      if (shouldLogSystemError(error)) {
-        await services.logs.logSystemError({
-          title: 'Registration completion failed',
-          actorId: interaction.user.id,
-          subjectId: interaction.user.id,
-          error,
-          context: { session_id: finishSessionId },
-        });
-      } else if (shouldLogAuthIssue(error)) {
-        await services.logs.logAuthIssue({
-          title: 'Registration completion blocked',
-          actorId: interaction.user.id,
-          subjectId: interaction.user.id,
-          message: stripLeadingStatusEmoji(userMessage),
-          severity: authLogSeverity(error),
-          technicalDetails: toSystemErrorSummary(error),
-          context: { session_id: finishSessionId },
-        });
-      }
+      await logAuthCommandFailure({
+        logs: services.logs,
+        title: 'Registration completion failed',
+        actorId: interaction.user.id,
+        subjectId: interaction.user.id,
+        error,
+        userMessage,
+        context: { session_id: finishSessionId },
+      });
     }
     return true;
   }

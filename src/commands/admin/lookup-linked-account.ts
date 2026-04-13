@@ -1,13 +1,7 @@
 import { MessageFlags, SlashCommandSubcommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
 import { buildLookupLinkedAccountEmbed } from '../../ui/embeds/register.js';
-import {
-  authLogSeverity,
-  shouldLogAuthIssue,
-  shouldLogSystemError,
-  stripLeadingStatusEmoji,
-  toSystemErrorSummary,
-  toUserErrorMessage,
-} from '../../utils/error-message.js';
+import { toUserErrorMessage } from '../../utils/error-message.js';
+import { logAuthCommandFailure } from '../../utils/auth-command-failure.js';
 import type { RegisterService } from '../../services/register.service.js';
 
 export function buildLookupLinkedAccountSubcommand(): SlashCommandSubcommandBuilder {
@@ -35,22 +29,13 @@ export async function executeLookupLinkedAccountSubcommand(
   } catch (error) {
     const userMessage = toUserErrorMessage(error);
     await interaction.editReply({ content: userMessage });
-    if (shouldLogSystemError(error)) {
-      await services.logs.logSystemError({
-        title: 'Lookup by linked account ID failed',
-        actorId: interaction.user.id,
-        error,
-        context: { linked_account_id: linkedAccountId },
-      });
-    } else if (shouldLogAuthIssue(error)) {
-      await services.logs.logAuthIssue({
-        title: 'Lookup by linked account ID returned no result',
-        actorId: interaction.user.id,
-        message: stripLeadingStatusEmoji(userMessage),
-        severity: authLogSeverity(error),
-        technicalDetails: toSystemErrorSummary(error),
-        context: { linked_account_id: linkedAccountId },
-      });
-    }
+    await logAuthCommandFailure({
+      logs: services.logs,
+      title: 'Lookup by linked account ID failed',
+      actorId: interaction.user.id,
+      error,
+      userMessage,
+      context: { linked_account_id: linkedAccountId },
+    });
   }
 }
