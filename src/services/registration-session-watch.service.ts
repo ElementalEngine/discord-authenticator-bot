@@ -10,7 +10,14 @@ import {
   buildRegistrationValidatingEmbed,
 } from '../ui/embeds/register.js';
 import { safeEditReply } from '../utils/discord-safe.js';
-import { shouldLogSystemError, stripLeadingStatusEmoji, toUserErrorMessage } from '../utils/error-message.js';
+import {
+  authLogSeverity,
+  shouldLogAuthIssue,
+  shouldLogSystemError,
+  stripLeadingStatusEmoji,
+  toSystemErrorSummary,
+  toUserErrorMessage,
+} from '../utils/error-message.js';
 import type { RegisterService } from './register.service.js';
 
 interface ActiveWatch {
@@ -90,6 +97,17 @@ export class RegistrationSessionWatchService {
         embeds: [buildRegistrationExpiredEmbed()],
         components: clearComponents(),
       });
+      if (watch.lastStatus && watch.lastStatus !== 'pending_auth') {
+        await this.registerService.logs.logAuthIssue({
+          title: 'Registration session expired',
+          actorId: input.user.id,
+          subjectId: input.user.id,
+          severity: 'info',
+          message: 'Registration session expired before the flow could finish.',
+          context: { session_id: input.sessionId, game: input.game, last_status: watch.lastStatus },
+          technicalDetails: 'REGISTRATION_SESSION_EXPIRED',
+        }).catch(() => undefined);
+      }
       return;
     }
 
@@ -105,19 +123,17 @@ export class RegistrationSessionWatchService {
       }
 
       this.stop(input.sessionId);
+      const userMessage = toUserErrorMessage(error);
       await safeEditReply(input.interaction, {
-        embeds: [buildRegistrationFailureEmbed(stripLeadingStatusEmoji(toUserErrorMessage(error)))],
+        embeds: [buildRegistrationFailureEmbed(stripLeadingStatusEmoji(userMessage))],
         components: clearComponents(),
       });
-      if (shouldLogSystemError(error)) {
-        await this.registerService.logs.logSystemError({
-          title: 'Registration session polling failed',
-          actorId: input.user.id,
-          subjectId: input.user.id,
-          error,
-          context: { session_id: input.sessionId, game: input.game },
-        });
-      }
+      await this.logAuthIssue(input, {
+        title: 'Registration session polling failed',
+        error,
+        message: stripLeadingStatusEmoji(userMessage),
+        context: { session_id: input.sessionId, game: input.game },
+      });
       return;
     }
 
@@ -173,19 +189,21 @@ export class RegistrationSessionWatchService {
           }
 
           this.stop(input.sessionId);
+          const userMessage = toUserErrorMessage(error);
           await safeEditReply(input.interaction, {
-            embeds: [buildRegistrationFailureEmbed(stripLeadingStatusEmoji(toUserErrorMessage(error)))],
+            embeds: [buildRegistrationFailureEmbed(stripLeadingStatusEmoji(userMessage))],
             components: clearComponents(),
           });
-          if (shouldLogSystemError(error)) {
-            await this.registerService.logs.logSystemError({
-              title: 'Registration auto-complete failed',
-              actorId: input.user.id,
-              subjectId: input.user.id,
-              error,
-              context: { session_id: input.sessionId, game: input.game },
-            });
-          }
+          await this.logAuthIssue(input, {
+            title: 'Registration auto-complete failed',
+            error,
+            message: stripLeadingStatusEmoji(userMessage),
+            context: {
+              session_id: input.sessionId,
+              game: input.game,
+              linked_account_id: session.linked_account_id ?? undefined,
+            },
+          });
           return;
         }
       case 'failed':
@@ -194,6 +212,20 @@ export class RegistrationSessionWatchService {
           embeds: [buildRegistrationFailureEmbed(session.failure_message ?? 'Registration could not be completed.')],
           components: clearComponents(),
         });
+        await this.registerService.logs.logAuthIssue({
+          title: 'Registration could not be completed',
+          actorId: input.user.id,
+          subjectId: input.user.id,
+          severity: 'warning',
+          message: session.failure_message ?? 'Registration could not be completed.',
+          context: {
+            session_id: input.sessionId,
+            game: input.game,
+            linked_account_id: session.linked_account_id ?? undefined,
+            linked_account_name: session.linked_account_name ?? undefined,
+          },
+          technicalDetails: `${session.failure_code ?? 'UNKNOWN_FAILURE'}: ${session.failure_message ?? 'Registration could not be completed.'}`,
+        }).catch(() => undefined);
         return;
       case 'expired':
         this.stop(input.sessionId);
@@ -201,6 +233,17 @@ export class RegistrationSessionWatchService {
           embeds: [buildRegistrationExpiredEmbed()],
           components: clearComponents(),
         });
+        if (watch.lastStatus && watch.lastStatus !== 'pending_auth') {
+          await this.registerService.logs.logAuthIssue({
+            title: 'Registration session expired',
+            actorId: input.user.id,
+            subjectId: input.user.id,
+            severity: 'info',
+            message: 'Registration session expired before the flow could finish.',
+            context: { session_id: input.sessionId, game: input.game, last_status: watch.lastStatus },
+            technicalDetails: session.failure_code ?? 'REGISTRATION_SESSION_EXPIRED',
+          }).catch(() => undefined);
+        }
         return;
       case 'completed':
         this.stop(input.sessionId);
@@ -213,5 +256,47 @@ export class RegistrationSessionWatchService {
 
   private isRetryableBackendError(error: unknown): boolean {
     return error instanceof ApiError && error.retryable;
+  }
+
+  private async logAuthIssue(
+    input: {
+      interaction: ChatInputCommandInteraction;
+      sessionId: string;
+      user: User;
+      member: GuildMember;
+      game: SupportedGame;
+      expiresAt: string;
+    },
+    details: {
+      title: string;
+      error: unknown;
+      message: string;
+      context?: Record<string, string | number | boolean | null | undefined>;
+    },
+  ): Promise<void> {
+    if (shouldLogSystemError(details.error)) {
+      await this.registerService.logs.logSystemError({
+        title: details.title,
+        actorId: input.user.id,
+        subjectId: input.user.id,
+        error: details.error,
+        context: details.context,
+      }).catch(() => undefined);
+      return;
+    }
+
+    if (!shouldLogAuthIssue(details.error)) {
+      return;
+    }
+
+    await this.registerService.logs.logAuthIssue({
+      title: details.title,
+      actorId: input.user.id,
+      subjectId: input.user.id,
+      severity: authLogSeverity(details.error),
+      message: details.message,
+      context: details.context,
+      technicalDetails: toSystemErrorSummary(details.error),
+    }).catch(() => undefined);
   }
 }

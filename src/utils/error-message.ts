@@ -24,6 +24,17 @@ const EXPECTED_AUTH_CODES = new Set([
   'XBOX_MANUAL_REQUIRED',
 ]);
 
+const LOW_VALUE_AUTH_CODES = new Set([
+  'REGISTRATION_SESSION_NOT_READY',
+]);
+
+const INFO_AUTH_CODES = new Set([
+  'ACCOUNT_NOT_FOUND',
+  'REGISTRATION_SESSION_EXPIRED',
+  'REGISTRATION_SESSION_NOT_FOUND',
+  'SESSION_EXPIRED',
+]);
+
 export function toUserErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     switch (error.code) {
@@ -90,6 +101,26 @@ export function shouldLogSystemError(error: unknown): boolean {
     return error.status >= 500 || error.retryable;
   }
   return true;
+}
+
+export function shouldLogAuthIssue(error: unknown): boolean {
+  if (error instanceof ApiError) {
+    if (LOW_VALUE_AUTH_CODES.has(error.code)) {
+      return false;
+    }
+    return true;
+  }
+  return true;
+}
+
+export function authLogSeverity(error: unknown): 'info' | 'warning' | 'error' {
+  if (shouldLogSystemError(error)) {
+    return 'error';
+  }
+  if (error instanceof ApiError && INFO_AUTH_CODES.has(error.code)) {
+    return 'info';
+  }
+  return 'warning';
 }
 
 export function toSystemErrorMessage(error: unknown): string {

@@ -1,6 +1,13 @@
 import { MessageFlags, SlashCommandSubcommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
 import { buildLookupDiscordEmbed } from '../../ui/embeds/register.js';
-import { shouldLogSystemError, toUserErrorMessage } from '../../utils/error-message.js';
+import {
+  authLogSeverity,
+  shouldLogAuthIssue,
+  shouldLogSystemError,
+  stripLeadingStatusEmoji,
+  toSystemErrorSummary,
+  toUserErrorMessage,
+} from '../../utils/error-message.js';
 import type { RegisterService } from '../../services/register.service.js';
 
 const DISCORD_ID_RE = /^\d{17,20}$/;
@@ -28,12 +35,22 @@ export async function executeLookupDiscordSubcommand(
     const account = await services.lookupByDiscordId(discordId);
     await interaction.editReply({ embeds: [buildLookupDiscordEmbed(account)] });
   } catch (error) {
-    await interaction.editReply({ content: toUserErrorMessage(error) });
+    const userMessage = toUserErrorMessage(error);
+    await interaction.editReply({ content: userMessage });
     if (shouldLogSystemError(error)) {
       await services.logs.logSystemError({
         title: 'Lookup by Discord ID failed',
         actorId: interaction.user.id,
         error,
+        context: { discord_id: discordId },
+      });
+    } else if (shouldLogAuthIssue(error)) {
+      await services.logs.logAuthIssue({
+        title: 'Lookup by Discord ID returned no result',
+        actorId: interaction.user.id,
+        message: stripLeadingStatusEmoji(userMessage),
+        severity: authLogSeverity(error),
+        technicalDetails: toSystemErrorSummary(error),
         context: { discord_id: discordId },
       });
     }

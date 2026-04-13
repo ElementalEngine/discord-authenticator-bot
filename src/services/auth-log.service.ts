@@ -14,6 +14,8 @@ import {
 
 type LogContextValue = string | number | boolean | null | undefined;
 
+type LogSeverity = 'info' | 'warning' | 'error';
+
 export class AuthLogService {
   constructor(private readonly client: Client) {}
 
@@ -167,6 +169,31 @@ export class AuthLogService {
     await channel.send({ embeds: [embed] });
   }
 
+  async logAuthIssue(input: {
+    title: string;
+    message: string;
+    actorId?: string;
+    subjectId?: string;
+    severity?: LogSeverity;
+    context?: Record<string, LogContextValue>;
+    technicalDetails?: string;
+  }): Promise<void> {
+    const channel = await this.client.channels.fetch(config.discord.channels.authLog).catch(() => null);
+    if (!channel?.isSendable()) return;
+
+    const contextValue = formatContextFields(input.context);
+    const embed = new EmbedBuilder()
+      .setTitle(`${emojiForSeverity(input.severity ?? 'warning')} ${input.title}`)
+      .setDescription(input.message)
+      .addFields(
+        ...buildSystemActorFields(input.actorId, input.subjectId),
+        ...(contextValue ? [{ name: 'Context', value: contextValue }] : []),
+        ...(input.technicalDetails ? [{ name: 'Technical details', value: truncateFieldValue(input.technicalDetails) }] : []),
+      );
+
+    await channel.send({ embeds: [embed] });
+  }
+
   async logSystemError(input: {
     title: string;
     actorId?: string;
@@ -218,18 +245,30 @@ function formatContextFields(context?: Record<string, LogContextValue>): string 
   const lines = Object.entries(context)
     .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== '')
     .map(([key, value]) => `${key}: \`${String(value)}\``);
-  return lines.length ? truncateFieldValue(lines.join('\n')) : null;
+
+  return lines.length > 0 ? truncateFieldValue(lines.join('\n')) : null;
+}
+
+function truncateFieldValue(value: string, maxLength = 1024): string {
+  return value.length <= maxLength ? value : `${value.slice(0, maxLength - 1)}…`;
 }
 
 function formatBoolean(
   value: boolean | null | undefined,
-  labels: { trueLabel?: string; falseLabel?: string } = {},
+  labels: { trueLabel?: string; falseLabel?: string; unknownLabel?: string } = {},
 ): string {
   if (value === true) return labels.trueLabel ?? 'Yes';
   if (value === false) return labels.falseLabel ?? 'No';
-  return 'Unknown';
+  return labels.unknownLabel ?? 'Unknown';
 }
 
-function truncateFieldValue(value: string): string {
-  return value.length > 1024 ? `${value.slice(0, 1021)}...` : value;
+function emojiForSeverity(severity: LogSeverity): string {
+  switch (severity) {
+    case 'info':
+      return EMOJIS.info;
+    case 'error':
+      return EMOJIS.error;
+    default:
+      return EMOJIS.warning;
+  }
 }
