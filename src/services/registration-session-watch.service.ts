@@ -21,7 +21,7 @@ import {
 import type { RegisterService } from './register.service.js';
 
 interface ActiveWatch {
-  timeout: NodeJS.Timeout;
+  timeout: ReturnType<typeof setTimeout> | null;
   expiresAtMs: number;
   statusRetries: number;
   completeRetries: number;
@@ -44,7 +44,7 @@ export class RegistrationSessionWatchService {
     this.stop(input.sessionId);
 
     RegistrationSessionWatchService.watches.set(input.sessionId, {
-      timeout: setTimeout(() => undefined, 0),
+      timeout: null,
       expiresAtMs: Date.parse(input.expiresAt),
       statusRetries: 0,
       completeRetries: 0,
@@ -57,7 +57,7 @@ export class RegistrationSessionWatchService {
   stop(sessionId: string): void {
     const existing = RegistrationSessionWatchService.watches.get(sessionId);
     if (existing) {
-      clearTimeout(existing.timeout);
+      if (existing.timeout) clearTimeout(existing.timeout);
       RegistrationSessionWatchService.watches.delete(sessionId);
     }
   }

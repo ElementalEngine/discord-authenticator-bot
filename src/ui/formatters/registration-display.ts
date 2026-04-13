@@ -13,7 +13,7 @@ import type { SupportedGame } from '../../config/types.js';
 export function formatGameLabel(game: SupportedGame | string): string {
   if (game === 'civ6') return 'Civilization VI';
   if (game === 'civ7') return 'Civilization VII';
-  return game;
+  return game.replaceAll('_', ' ');
 }
 
 export function formatDiscordAccountBlock(input: {

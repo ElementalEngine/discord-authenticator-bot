@@ -43,14 +43,16 @@ export function toUserErrorMessage(error: unknown): string {
       case 'ACCOUNT_LOOKUP_FAILED':
       case 'AUTH_COMPLETE_INTERNAL_ERROR':
       case 'AUTH_CALLBACK_INTERNAL_ERROR':
-      case 'DISCORD_LINKED_ACCOUNT_FETCH_FAILED':
       case 'MANUAL_REGISTRATION_FAILED':
       case 'RANK_ROLE_REQUEST_FAILED':
       case 'REGISTRATION_FINALIZE_FAILED':
       case 'REGISTRATION_START_FAILED':
       case 'REGISTRATION_STATUS_FAILED':
-      case 'STEAM_API_FAILURE':
         return `${EMOJIS.warning} The auth service is temporarily unavailable. Please try again shortly.`;
+      case 'DISCORD_OAUTH_FAILED':
+      case 'DISCORD_LINKED_ACCOUNT_FETCH_FAILED':
+      case 'STEAM_API_FAILURE':
+        return `${EMOJIS.warning} ${error.message}`;
       case 'REGISTRATION_SESSION_EXPIRED':
       case 'SESSION_EXPIRED':
         return `${EMOJIS.warning} Your registration session expired. Start the flow again with /register register.`;

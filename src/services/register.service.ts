@@ -1,4 +1,5 @@
 import type { Client, GuildMember, User } from 'discord.js';
+import { ApiError } from '../api/errors.js';
 import { ApiClient } from '../api/client.js';
 import type {
   DiscordLookupResponse,
@@ -220,15 +221,26 @@ export class RegisterService {
         role_intents: sync.applied,
       };
     } catch (error) {
+      const failure = toFinalizeFailure(error);
       await this.api
         .finalizeRegistrationOperation(input.operation.operation_id, {
           result: 'failed',
           applied_role_intents: [],
-          failure_code: error instanceof Error ? error.name : 'ROLE_SYNC_FAILED',
-          failure_message: error instanceof Error ? error.message : String(error),
+          failure_code: failure.code,
+          failure_message: failure.message,
         })
         .catch(() => undefined);
       throw error;
     }
   }
+}
+
+function toFinalizeFailure(error: unknown): { code: string; message: string } {
+  if (error instanceof ApiError) {
+    return { code: error.code, message: error.message };
+  }
+  if (error instanceof Error) {
+    return { code: error.name || 'ROLE_SYNC_FAILED', message: error.message };
+  }
+  return { code: 'ROLE_SYNC_FAILED', message: String(error) };
 }

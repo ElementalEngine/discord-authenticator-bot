@@ -6,9 +6,9 @@ Lean Discord auth bot for CivCPL. This bot owns Discord UX, policy checks, and r
 
 - `/register register game:<civ6|civ7>`
 - `/register add-rank-role game:<civ6|civ7>`
-- `/admin manual-register user:<member> game:<civ6|civ7> steam_id:<id> reason:<text>`
-- `/admin lookup-discord user:<member> [discord_id:<id>]`
-- `/admin lookup-steam steam_id:<id>`
+- `/admin manual-register discord-id:<id> discord-username:<name> game:<civ6|civ7> platform:<steam|epic|xbox> platform-account-id:<id> platform-account-name:<name> [reason:<text>]`
+- `/admin lookup-discord discord-id:<id>`
+- `/admin lookup-linked-account linked-account-id:<id>`
 
 ## Backend contract
 
@@ -21,7 +21,7 @@ This bot expects the backend auth feature to expose:
 - `POST /api/v1/auth/rank-role-requests`
 - `POST /api/v1/auth/admin/manual-registrations`
 - `GET /api/v1/auth/admin/accounts/discord/{discordId}`
-- `GET /api/v1/auth/admin/accounts/steam/{steamId}`
+- `GET /api/v1/auth/admin/accounts/linked-account/{linkedAccountId}`
 
 ## Environment files
 

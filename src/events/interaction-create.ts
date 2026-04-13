@@ -1,4 +1,4 @@
-import { Events, type Interaction } from 'discord.js';
+import { Events, MessageFlags, type Interaction } from 'discord.js';
 import client from '../client.js';
 import { handleRegisterInteraction } from '../interactions/register.interactions.js';
 
@@ -15,7 +15,7 @@ export async function execute(interaction: Interaction): Promise<void> {
   const command = client.commands.get(interaction.commandName);
   if (!command) {
     if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply({ content: 'Command not found.', ephemeral: true });
+      await interaction.reply({ content: 'Command not found.', flags: MessageFlags.Ephemeral });
     }
     return;
   }
@@ -30,9 +30,9 @@ export async function execute(interaction: Interaction): Promise<void> {
       return;
     }
     if (interaction.replied) {
-      await interaction.followUp({ content, ephemeral: true }).catch(() => undefined);
+      await interaction.followUp({ content, flags: MessageFlags.Ephemeral }).catch(() => undefined);
       return;
     }
-    await interaction.reply({ content, ephemeral: true }).catch(() => undefined);
+    await interaction.reply({ content, flags: MessageFlags.Ephemeral }).catch(() => undefined);
   }
 }
