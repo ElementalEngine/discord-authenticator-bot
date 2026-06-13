@@ -7,6 +7,7 @@ const EXPECTED_AUTH_CODES = new Set([
   'DISCORD_ID_CONFLICT',
   'DISCORD_LINKED_ACCOUNT_NOT_FOUND',
   'DISCORD_USER_MISMATCH',
+  '2K_MANUAL_REQUIRED',
   'EPIC_MANUAL_REQUIRED',
   'INVALID_AUTH_STATE',
   'LINKED_ACCOUNT_CONFLICT',
@@ -16,6 +17,7 @@ const EXPECTED_AUTH_CODES = new Set([
   'REGISTRATION_SESSION_EXPIRED',
   'REGISTRATION_SESSION_NOT_FOUND',
   'REGISTRATION_SESSION_NOT_READY',
+  'SELF_SERVICE_REGISTRATION_NOT_ALLOWED',
   'SESSION_EXPIRED',
   'STEAM_ID_CONFLICT',
   'STEAM_OWNERSHIP_MISSING',
@@ -48,6 +50,7 @@ export function toUserErrorMessage(error: unknown): string {
       case 'REGISTRATION_FINALIZE_FAILED':
       case 'REGISTRATION_START_FAILED':
       case 'REGISTRATION_STATUS_FAILED':
+      case 'SELF_SERVICE_REGISTRATION_FAILED':
         return `${EMOJIS.warning} The auth service is temporarily unavailable. Please try again shortly.`;
       case 'DISCORD_OAUTH_FAILED':
       case 'DISCORD_LINKED_ACCOUNT_FETCH_FAILED':
@@ -55,9 +58,9 @@ export function toUserErrorMessage(error: unknown): string {
         return `${EMOJIS.warning} ${error.message}`;
       case 'REGISTRATION_SESSION_EXPIRED':
       case 'SESSION_EXPIRED':
-        return `${EMOJIS.warning} Your registration session expired. Start the flow again with /register register.`;
+        return `${EMOJIS.warning} Your registration session expired. Start the flow again with /register civ6 or /register civ7.`;
       case 'REGISTRATION_SESSION_NOT_FOUND':
-        return `${EMOJIS.warning} That registration session is no longer available. Start again with /register register.`;
+        return `${EMOJIS.warning} That registration session is no longer available. Start again with /register civ6 or /register civ7.`;
       case 'REGISTRATION_SESSION_NOT_READY':
         return `${EMOJIS.info} Registration checks are still running. Please wait for this message to update.`;
       case 'DISCORD_LINKED_ACCOUNT_NOT_FOUND':
@@ -74,8 +77,10 @@ export function toUserErrorMessage(error: unknown): string {
       case 'AUTH_MISCONFIGURED':
       case 'AUTH_SERVICE_MISCONFIGURED':
       case 'DISCORD_USER_MISMATCH':
+      case '2K_MANUAL_REQUIRED':
       case 'EPIC_MANUAL_REQUIRED':
       case 'XBOX_MANUAL_REQUIRED':
+      case 'SELF_SERVICE_REGISTRATION_NOT_ALLOWED':
         return `${EMOJIS.warning} ${error.message}`;
       case 'ROLE_SYNC_FORBIDDEN':
       case 'ROLE_SYNC_CONFIG_ERROR':

@@ -4,11 +4,41 @@ import type {
   LinkedAccountLookupHit,
   LinkedAccountLookupResponse,
   RegistrationPlatform,
+  RegistrationSummary,
   RoleIntent,
 } from '../../api/types.js';
 import { ROLE_INTENTS } from '../../config/constants.js';
 import { config } from '../../config/index.js';
 import type { SupportedGame } from '../../config/types.js';
+
+const REGISTRATION_METHOD_LABELS: Record<string, string> = {
+  oauth_steam_api: 'Steam API Auth',
+  admin_steam_family_share: 'Admin Steam Family Share',
+  admin_staff_attested: 'Admin staff-attested',
+  self_service_2k: 'Civ 7 2K self-service',
+  oauth: 'Steam API Auth',
+  manual_admin: 'Admin (legacy)',
+};
+
+export function formatRegistrationMethodLabel(method?: string | null): string {
+  const value = method?.trim();
+  if (!value) return 'Unknown';
+  return REGISTRATION_METHOD_LABELS[value] ?? value;
+}
+
+function formatRegistrationsLine(registrations?: readonly RegistrationSummary[]): string | null {
+  if (!registrations || registrations.length === 0) return null;
+  return registrations
+    .map((entry) => {
+      const parts = [`${formatGameLabel(entry.game)} — ${formatRegistrationMethodLabel(entry.method)}`];
+      const registeredAtMs = entry.registered_at ? Date.parse(entry.registered_at) : Number.NaN;
+      if (Number.isFinite(registeredAtMs)) {
+        parts.push(`registered <t:${Math.floor(registeredAtMs / 1000)}:D>`);
+      }
+      return parts.join(', ');
+    })
+    .join('\n');
+}
 
 export function formatGameLabel(game: SupportedGame | string): string {
   if (game === 'civ6') return 'Civilization VI';
@@ -32,6 +62,8 @@ export function formatLinkedAccountHeading(platform?: RegistrationPlatform | nul
   switch (platform) {
     case 'epic':
       return 'Epic account';
+    case '2k':
+      return '2K account';
     case 'xbox':
       return 'Xbox account';
     case 'steam':
@@ -44,6 +76,8 @@ export function formatLinkedAccountEmpty(platform?: RegistrationPlatform | null)
   switch (platform) {
     case 'epic':
       return 'No linked Epic account found.';
+    case '2k':
+      return 'No linked 2K account found.';
     case 'xbox':
       return 'No linked Xbox account found.';
     case 'steam':
@@ -62,11 +96,25 @@ export function formatLinkedAccountBlock(input: {
     return input.emptyMessage ?? formatLinkedAccountEmpty(input.platform);
   }
 
-  const idLabel = input.platform === 'epic' ? 'Epic ID' : input.platform === 'xbox' ? 'Xbox ID' : 'Steam ID';
+  const idLabel = linkedAccountIdLabel(input.platform);
   return [
     `Username: ${formatSearchable(input.username)}`,
     `${idLabel}: ${formatSearchable(input.accountId)}`,
   ].join('\n');
+}
+
+function linkedAccountIdLabel(platform?: RegistrationPlatform | null): string {
+  switch (platform) {
+    case 'epic':
+      return 'Epic ID';
+    case '2k':
+      return '2K ID';
+    case 'xbox':
+      return 'Xbox ID';
+    case 'steam':
+    default:
+      return 'Steam ID';
+  }
 }
 
 export function formatRoleUpdateLines(intents: readonly RoleIntent[]): string {
@@ -135,11 +183,17 @@ function formatLinkedAccountHits(hits: readonly LinkedAccountLookupHit[]): strin
   return hits
     .map((hit, index) => {
       const heading = `${index + 1}. ${formatLinkedAccountHeading(hit.linked_platform)}`;
-      return [heading, formatLinkedAccountBlock({
-        platform: hit.linked_platform,
-        username: hit.linked_account_name,
-        accountId: hit.linked_account_id,
-      })].join('\n');
+      const lines = [
+        heading,
+        formatLinkedAccountBlock({
+          platform: hit.linked_platform,
+          username: hit.linked_account_name,
+          accountId: hit.linked_account_id,
+        }),
+      ];
+      const registrationsLine = formatRegistrationsLine(hit.registrations);
+      if (registrationsLine) lines.push(`Registrations:\n${registrationsLine}`);
+      return lines.join('\n');
     })
     .join('\n\n');
 }
@@ -150,11 +204,19 @@ function formatDiscordAccountHits(hits: readonly DiscordAccountLookupHit[]): str
   }
 
   return hits
-    .map((hit, index) => [`${index + 1}. Discord account`, formatDiscordAccountBlock({
-      displayName: hit.discord_display_name,
-      username: hit.discord_username,
-      discordId: hit.discord_id,
-    })].join('\n'))
+    .map((hit, index) => {
+      const lines = [
+        `${index + 1}. Discord account`,
+        formatDiscordAccountBlock({
+          displayName: hit.discord_display_name,
+          username: hit.discord_username,
+          discordId: hit.discord_id,
+        }),
+      ];
+      const registrationsLine = formatRegistrationsLine(hit.registrations);
+      if (registrationsLine) lines.push(`Registrations:\n${registrationsLine}`);
+      return lines.join('\n');
+    })
     .join('\n\n');
 }
 

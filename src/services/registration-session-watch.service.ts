@@ -1,4 +1,4 @@
-import type { ChatInputCommandInteraction, GuildMember, User } from 'discord.js';
+import type { ButtonInteraction, ChatInputCommandInteraction, GuildMember, User } from 'discord.js';
 import { ApiError } from '../api/errors.js';
 import type { RegistrationSessionStatusResponse } from '../api/types.js';
 import type { SupportedGame } from '../config/types.js';
@@ -29,7 +29,7 @@ interface ActiveWatch {
 }
 
 interface WatchInput {
-  interaction: ChatInputCommandInteraction;
+  interaction: ChatInputCommandInteraction | ButtonInteraction;
   sessionId: string;
   user: User;
   member: GuildMember;

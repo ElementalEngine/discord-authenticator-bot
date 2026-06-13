@@ -1,6 +1,14 @@
 import type { SupportedGame } from '../config/types.js';
 
-export type RegistrationPlatform = 'steam' | 'epic' | 'xbox';
+export type RegistrationPlatform = 'steam' | 'epic' | '2k' | 'xbox';
+
+export type RegistrationMethod =
+  | 'oauth_steam_api'
+  | 'admin_steam_family_share'
+  | 'admin_staff_attested'
+  | 'self_service_2k';
+
+export type ManualRegistrationChoice = 'steam' | 'steam_family_share' | 'epic' | '2k';
 
 export type RegistrationSessionStatus =
   | 'pending_auth'
@@ -63,6 +71,7 @@ export interface RegistrationOperationResponse {
   linked_platform?: RegistrationPlatform | null;
   linked_account_id?: string | null;
   linked_account_name?: string | null;
+  registration_method?: RegistrationMethod | null;
   game: SupportedGame;
   role_intents: RoleIntent[];
 }
@@ -74,10 +83,28 @@ export interface FinalizeOperationRequest {
   failure_message: string | null;
 }
 
+export interface SelfServiceRegistrationRequest {
+  discord_user_id: string;
+  game: SupportedGame;
+  platform: RegistrationPlatform;
+  platform_account_id: string;
+  platform_account_name?: string | null;
+  discord_username?: string | null;
+  discord_display_name?: string | null;
+}
+
+export interface RegistrationSummary {
+  game: SupportedGame;
+  // `string` (not RegistrationMethod) to tolerate legacy stored values like "oauth".
+  method?: string | null;
+  registered_at?: string | null;
+}
+
 export interface LinkedAccountLookupHit {
   linked_platform?: RegistrationPlatform | null;
   linked_account_id: string;
   linked_account_name?: string | null;
+  registrations?: RegistrationSummary[];
 }
 
 export interface DiscordLookupResponse {
@@ -91,6 +118,7 @@ export interface DiscordAccountLookupHit {
   discord_id: string;
   discord_username?: string | null;
   discord_display_name?: string | null;
+  registrations?: RegistrationSummary[];
 }
 
 export interface LinkedAccountLookupResponse {

@@ -4,6 +4,7 @@ import { ApiClient } from '../api/client.js';
 import type {
   DiscordLookupResponse,
   LinkedAccountLookupResponse,
+  ManualRegistrationChoice,
   RegistrationOperationResponse,
   RegistrationPlatform,
   RegistrationSessionStatusResponse,
@@ -24,6 +25,7 @@ type FinalizableOperation = Pick<
   | 'linked_platform'
   | 'linked_account_id'
   | 'linked_account_name'
+  | 'registration_method'
   | 'role_intents'
 >;
 
@@ -31,6 +33,7 @@ interface FinalizedOperationContext {
   linkedPlatform: RegistrationPlatform;
   linkedAccountId: string;
   linkedAccountName: string | null;
+  registrationMethod: string | null;
   resolvedDiscordUsername: string;
 }
 
@@ -92,10 +95,11 @@ export class RegisterService {
     subject: User;
     member: GuildMember;
     game: SupportedGame;
-    platform: RegistrationPlatform;
+    platform: ManualRegistrationChoice;
     accountId: string;
-    accountName: string;
-    discordUsername: string;
+    accountName?: string | null;
+    discordUsername?: string | null;
+    discordDisplayName?: string | null;
     reason?: string;
   }): Promise<RegistrationOperationResponse> {
     const operation = await this.api.manualRegister({
@@ -103,11 +107,11 @@ export class RegisterService {
       subject_discord_id: input.subject.id,
       platform: input.platform,
       platform_account_id: input.accountId,
-      platform_account_name: input.accountName,
+      platform_account_name: input.accountName ?? undefined,
       game: input.game,
       reason: input.reason,
-      discord_username: input.discordUsername,
-      discord_display_name: input.member.displayName,
+      discord_username: input.discordUsername ?? input.subject.username,
+      discord_display_name: input.discordDisplayName ?? input.member.displayName,
     });
 
     return this.applyAndFinalize({
@@ -117,7 +121,34 @@ export class RegisterService {
       member: input.member,
       mode: 'manual',
       manualReason: input.reason,
-      resolvedDiscordUsername: input.discordUsername,
+      resolvedDiscordUsername: input.discordUsername ?? input.subject.username,
+    });
+  }
+
+  async selfServiceRegister(input: {
+    actor: User;
+    member: GuildMember;
+    game: SupportedGame;
+    accountId: string;
+    accountName?: string | null;
+  }): Promise<RegistrationOperationResponse> {
+    const operation = await this.api.selfServiceRegister({
+      discord_user_id: input.actor.id,
+      game: input.game,
+      platform: '2k',
+      platform_account_id: input.accountId,
+      platform_account_name: input.accountName ?? undefined,
+      discord_username: input.actor.username,
+      discord_display_name: input.member.displayName,
+    });
+
+    return this.applyAndFinalize({
+      operation,
+      actor: input.actor,
+      subject: input.actor,
+      member: input.member,
+      mode: 'self-service',
+      resolvedDiscordUsername: input.actor.username,
     });
   }
 
@@ -217,6 +248,7 @@ export class RegisterService {
       linkedPlatform: input.operation.linked_platform ?? 'steam',
       linkedAccountId: input.operation.linked_account_id ?? input.operation.steam_id,
       linkedAccountName: input.operation.linked_account_name ?? input.operation.steam_name ?? null,
+      registrationMethod: input.operation.registration_method ?? null,
       resolvedDiscordUsername: input.resolvedDiscordUsername ?? input.subject.username,
     };
   }
@@ -231,6 +263,7 @@ export class RegisterService {
     linkedPlatform: RegistrationPlatform;
     linkedAccountId: string;
     linkedAccountName: string | null;
+    registrationMethod: string | null;
     resolvedDiscordUsername: string;
     appliedRoleIntents: readonly RegistrationOperationResponse['role_intents'][number][];
   }): Promise<void> {
@@ -243,6 +276,7 @@ export class RegisterService {
         linkedPlatform: input.linkedPlatform,
         accountId: input.linkedAccountId,
         accountName: input.linkedAccountName,
+        registrationMethod: input.registrationMethod,
         game: input.operation.game,
         reason: input.manualReason ?? 'No reason provided.',
       });
@@ -256,6 +290,7 @@ export class RegisterService {
         linkedPlatform: input.linkedPlatform,
         accountId: input.linkedAccountId,
         accountName: input.linkedAccountName,
+        registrationMethod: input.registrationMethod,
         appliedRoleIntents: input.appliedRoleIntents,
         mode: 'manual',
       });
@@ -283,6 +318,7 @@ export class RegisterService {
       linkedPlatform: input.linkedPlatform,
       accountId: input.linkedAccountId,
       accountName: input.linkedAccountName,
+      registrationMethod: input.registrationMethod,
       appliedRoleIntents: input.appliedRoleIntents,
       mode: 'self-service',
     });

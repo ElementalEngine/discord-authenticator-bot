@@ -6,10 +6,11 @@ import type {
   DiscordLookupResponse,
   FinalizeOperationRequest,
   LinkedAccountLookupResponse,
+  ManualRegistrationChoice,
   RegistrationOperationResponse,
-  RegistrationPlatform,
   RegistrationSessionResponse,
   RegistrationSessionStatusResponse,
+  SelfServiceRegistrationRequest,
 } from './types.js';
 
 type FetchLike = typeof fetch;
@@ -88,9 +89,9 @@ export class ApiClient {
   async manualRegister(input: {
     actor_discord_id: string;
     subject_discord_id: string;
-    platform: RegistrationPlatform;
+    platform: ManualRegistrationChoice;
     platform_account_id: string;
-    platform_account_name: string;
+    platform_account_name?: string | null;
     game: SupportedGame;
     reason?: string;
     discord_username?: string | null;
@@ -98,6 +99,18 @@ export class ApiClient {
   }): Promise<RegistrationOperationResponse> {
     return this.requestJson<RegistrationOperationResponse>(
       '/api/v1/auth/admin/manual-registrations',
+      {
+        method: 'POST',
+        body: JSON.stringify(input),
+      },
+    );
+  }
+
+  async selfServiceRegister(
+    input: SelfServiceRegistrationRequest,
+  ): Promise<RegistrationOperationResponse> {
+    return this.requestJson<RegistrationOperationResponse>(
+      '/api/v1/auth/manual-registration-requests',
       {
         method: 'POST',
         body: JSON.stringify(input),

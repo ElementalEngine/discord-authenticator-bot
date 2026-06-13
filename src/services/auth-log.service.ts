@@ -9,6 +9,7 @@ import {
   formatGameLabel,
   formatLinkedAccountBlock,
   formatLinkedAccountHeading,
+  formatRegistrationMethodLabel,
   formatRoleUpdateLines,
 } from '../ui/formatters/registration-display.js';
 
@@ -54,6 +55,7 @@ export class AuthLogService {
           value: [
             formatLinkedAccountBlock({ platform: 'steam', username: input.steamName, accountId: input.steamId }),
             `Game: ${formatGameLabel(input.game)}`,
+            `Method: ${formatRegistrationMethodLabel('oauth_steam_api')}`,
           ].join('\n'),
         },
       );
@@ -69,6 +71,7 @@ export class AuthLogService {
     linkedPlatform: RegistrationPlatform;
     accountId: string;
     accountName?: string | null;
+    registrationMethod?: string | null;
     game: SupportedGame;
     reason: string;
   }): Promise<void> {
@@ -91,6 +94,7 @@ export class AuthLogService {
           value: [
             formatLinkedAccountBlock({ platform: input.linkedPlatform, username: input.accountName, accountId: input.accountId }),
             `Game: ${formatGameLabel(input.game)}`,
+            `Method: ${formatRegistrationMethodLabel(input.registrationMethod)}`,
           ].join('\n'),
         },
         {
@@ -111,6 +115,7 @@ export class AuthLogService {
     linkedPlatform: RegistrationPlatform;
     accountId: string;
     accountName?: string | null;
+    registrationMethod?: string | null;
     appliedRoleIntents: readonly RoleIntent[];
     mode: 'self-service' | 'manual';
   }): Promise<void> {
@@ -133,6 +138,7 @@ export class AuthLogService {
           value: formatLinkedAccountBlock({ platform: input.linkedPlatform, username: input.accountName, accountId: input.accountId }),
         },
         { name: 'Game', value: formatGameLabel(input.game) },
+        { name: 'Method', value: formatRegistrationMethodLabel(input.registrationMethod) },
         { name: 'Discord role updates', value: formatRoleUpdateLines(input.appliedRoleIntents) },
         ...buildPerformedByField(input.actorId, input.subjectId),
       );
@@ -163,6 +169,7 @@ export class AuthLogService {
           }),
         },
         { name: 'Game', value: formatGameLabel(input.game) },
+        { name: 'Required registration method', value: formatRegistrationMethodLabel('oauth_steam_api') },
         { name: 'Discord role updates', value: formatRoleUpdateLines(input.appliedRoleIntents) },
       );
 
@@ -208,10 +215,14 @@ export class AuthLogService {
     const embed = new EmbedBuilder()
       .setTitle(`${EMOJIS.error} ${input.title}`)
       .setDescription(toSystemErrorMessage(input.error))
-      .addFields(...buildSystemActorFields(input.actorId, input.subjectId), ...(contextValue ? [{ name: 'Context', value: contextValue }] : []), {
-        name: 'Technical details',
-        value: truncateFieldValue(toSystemErrorSummary(input.error)),
-      });
+      .addFields(
+        ...buildSystemActorFields(input.actorId, input.subjectId),
+        ...(contextValue ? [{ name: 'Context', value: contextValue }] : []),
+        {
+          name: 'Technical details',
+          value: truncateFieldValue(toSystemErrorSummary(input.error)),
+        },
+      );
 
     await channel.send({ embeds: [embed] });
   }
@@ -231,12 +242,8 @@ function buildSystemActorFields(
       { name: 'Subject', value: `<@${subjectId}>`, inline: true },
     ];
   }
-  if (subjectId) {
-    return [{ name: 'User', value: `<@${subjectId}>`, inline: true }];
-  }
-  if (actorId) {
-    return [{ name: 'User', value: `<@${actorId}>`, inline: true }];
-  }
+  if (subjectId) return [{ name: 'User', value: `<@${subjectId}>`, inline: true }];
+  if (actorId) return [{ name: 'User', value: `<@${actorId}>`, inline: true }];
   return [];
 }
 

@@ -1,13 +1,18 @@
 import { Events, MessageFlags, type Interaction } from 'discord.js';
 import client from '../client.js';
-import { handleRegisterInteraction } from '../interactions/register.interactions.js';
+import { handleRegisterInteraction, handleRegisterModal } from '../interactions/register.interactions.js';
 
 export const name = Events.InteractionCreate;
 
 export async function execute(interaction: Interaction): Promise<void> {
   if (interaction.isButton()) {
-    await handleRegisterInteraction(interaction, client);
-    return;
+    const handled = await handleRegisterInteraction(interaction, client);
+    if (handled) return;
+  }
+
+  if (interaction.isModalSubmit()) {
+    const handled = await handleRegisterModal(interaction, client);
+    if (handled) return;
   }
 
   if (!interaction.isChatInputCommand()) return;

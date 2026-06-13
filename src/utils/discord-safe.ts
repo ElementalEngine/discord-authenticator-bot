@@ -16,4 +16,3 @@ export async function safeEditReply(
   }
   await interaction.editReply(payload);
 }
-

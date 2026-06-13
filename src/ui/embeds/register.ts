@@ -13,6 +13,7 @@ import {
   formatRoleUpdateLines,
   formatLinkedAccountBlock,
   formatLinkedAccountHeading,
+  formatRegistrationMethodLabel,
   toLookupDiscordFields,
   toLookupLinkedAccountFields,
 } from '../formatters/registration-display.js';
@@ -61,6 +62,52 @@ export function buildRegistrationStartEmbed(input: {
           `Need help? Ask <@&${config.discord.roles.moderator}> in <#${config.discord.channels.welcome}>.`,
         ].join('\n'),
       },
+    );
+}
+
+export function buildCiv7MethodSelectEmbed(): EmbedBuilder {
+  return new EmbedBuilder()
+    .setTitle('Register for Civilization VII')
+    .setDescription(
+      [
+        'Choose how you want to register for **Civilization VII**:',
+        '',
+        '**Steam API Auth** — link your Steam account through Discord and verify ownership automatically.',
+        '**Manual Register** — register a **2K** account ID yourself (no Steam ownership check).',
+      ].join('\n'),
+    );
+}
+
+export function buildSelfServiceSuccessEmbed(input: {
+  game: SupportedGame;
+  platform: RegistrationPlatform;
+  accountId: string;
+  accountName?: string | null;
+  discordId: string;
+  discordUsername?: string | null;
+  discordDisplayName?: string | null;
+  roleIntents: readonly RoleIntent[];
+  registrationMethod?: string | null;
+}): EmbedBuilder {
+  return new EmbedBuilder()
+    .setTitle('Registration completed')
+    .setDescription('Your registration is complete.')
+    .addFields(
+      {
+        name: 'Discord account',
+        value: formatDiscordAccountBlock({
+          displayName: input.discordDisplayName,
+          username: input.discordUsername,
+          discordId: input.discordId,
+        }),
+      },
+      {
+        name: formatLinkedAccountHeading(input.platform),
+        value: formatLinkedAccountBlock({ platform: input.platform, username: input.accountName, accountId: input.accountId }),
+      },
+      { name: 'Game', value: formatGameLabel(input.game) },
+      { name: 'Method', value: formatRegistrationMethodLabel(input.registrationMethod ?? 'self_service_2k') },
+      { name: 'Discord role updates', value: formatRoleUpdateLines(input.roleIntents) },
     );
 }
 
@@ -116,6 +163,7 @@ export function buildManualRegistrationSuccessEmbed(input: {
   discordUsername?: string | null;
   discordDisplayName?: string | null;
   roleIntents: readonly RoleIntent[];
+  registrationMethod?: string | null;
 }): EmbedBuilder {
   return new EmbedBuilder()
     .setTitle('Manual registration completed')
@@ -134,6 +182,7 @@ export function buildManualRegistrationSuccessEmbed(input: {
         value: formatLinkedAccountBlock({ platform: input.platform, username: input.accountName, accountId: input.accountId }),
       },
       { name: 'Game', value: formatGameLabel(input.game) },
+      { name: 'Method', value: formatRegistrationMethodLabel(input.registrationMethod) },
       { name: 'Discord role updates', value: formatRoleUpdateLines(input.roleIntents) },
     );
 }
@@ -154,7 +203,7 @@ export function buildRankRoleSuccessEmbed(input: {
 export function buildRegistrationExpiredEmbed(): EmbedBuilder {
   return new EmbedBuilder()
     .setTitle('Registration expired')
-    .setDescription('This registration session expired before it could finish. Run `/register register` to start again.');
+    .setDescription('This registration session expired before it could finish. Run `/register civ6` or `/register civ7` to start again.');
 }
 
 export function buildRegistrationFailureEmbed(message: string): EmbedBuilder {
@@ -165,12 +214,12 @@ export function buildRegistrationFailureEmbed(message: string): EmbedBuilder {
 
 export function buildLookupDiscordEmbed(account: DiscordLookupResponse): EmbedBuilder {
   return new EmbedBuilder()
-    .setTitle('Account lookup — Discord ID')
+    .setTitle('Account lookup by Discord ID')
     .addFields(...toLookupDiscordFields(account));
 }
 
 export function buildLookupLinkedAccountEmbed(account: LinkedAccountLookupResponse): EmbedBuilder {
   return new EmbedBuilder()
-    .setTitle('Account lookup — linked account ID')
+    .setTitle('Account lookup by linked account ID')
     .addFields(...toLookupLinkedAccountFields(account));
 }
