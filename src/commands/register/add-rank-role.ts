@@ -1,6 +1,6 @@
 import { MessageFlags, SlashCommandSubcommandBuilder, type ChatInputCommandInteraction } from 'discord.js';
 import { GAME_CHOICES } from '../../config/constants.js';
-import type { SupportedGame } from '../../config/types.js';
+import { isSupportedGame } from '../../utils/option-guards.js';
 import { buildRankRoleSuccessEmbed } from '../../ui/embeds/register.js';
 import { toUserErrorMessage } from '../../utils/error-message.js';
 import { logAuthCommandFailure } from '../../utils/auth-command-failure.js';
@@ -24,7 +24,14 @@ export async function executeAddRankRoleSubcommand(
   interaction: ChatInputCommandInteraction,
   services: RegisterService,
 ): Promise<void> {
-  const game = interaction.options.getString('game', true) as SupportedGame;
+  const game = interaction.options.getString('game', true);
+  if (!isSupportedGame(game)) {
+    await interaction.reply({
+      content: 'Unknown game option. Please re-run the command and pick one of the provided choices.',
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
   const allowedChannels = [config.discord.channels.civ6Commands, config.discord.channels.civ7Commands];
   if (!allowedChannels.includes(interaction.channelId)) {
     await interaction.reply({

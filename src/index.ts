@@ -17,7 +17,7 @@ void main();
 async function shutdown(signal: NodeJS.Signals): Promise<void> {
   try {
     console.log(`🛑 Received ${signal}. Shutting down...`);
-    client.destroy();
+    await client.destroy();
     process.exit(0);
   } catch (error) {
     console.error('Error during shutdown:', error);

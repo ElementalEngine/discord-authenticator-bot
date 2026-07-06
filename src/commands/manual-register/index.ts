@@ -2,8 +2,7 @@ import { MessageFlags, SlashCommandBuilder, type ChatInputCommandInteraction } f
 import { COMMAND_NAMES, GAME_CHOICES, MANUAL_REGISTER_PLATFORM_CHOICES } from '../../config/constants.js';
 import { config } from '../../config/index.js';
 import { ensureCommandAccess } from '../../utils/ensure-command-access.js';
-import type { SupportedGame } from '../../config/types.js';
-import type { ManualRegistrationChoice } from '../../api/types.js';
+import { isSupportedGame, isManualRegistrationChoice } from '../../utils/option-guards.js';
 import { buildManualRegistrationSuccessEmbed } from '../../ui/embeds/register.js';
 import { toUserErrorMessage } from '../../utils/error-message.js';
 import { logAuthCommandFailure } from '../../utils/auth-command-failure.js';
@@ -53,15 +52,29 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
   });
   if (!allowed) return;
 
-  const game = interaction.options.getString('game', true) as SupportedGame;
+  const game = interaction.options.getString('game', true);
   const discordId = interaction.options.getString('discord-id', true).trim();
-  const platform = interaction.options.getString('platform', true) as ManualRegistrationChoice;
+  const platform = interaction.options.getString('platform', true);
   const accountId = interaction.options.getString('platform-account-id', true).trim();
   const displayName = interaction.options.getString('discord-display-name', false)?.trim() || undefined;
   const username = interaction.options.getString('discord-account-name', false)?.trim() || undefined;
   const accountName = interaction.options.getString('platform-account-name', false)?.trim() || undefined;
   const reason = interaction.options.getString('reason', false)?.trim() || undefined;
 
+  if (!isSupportedGame(game)) {
+    await interaction.reply({
+      content: 'Unknown game option. Please re-run the command and pick one of the provided choices.',
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+  if (!isManualRegistrationChoice(platform)) {
+    await interaction.reply({
+      content: 'Unknown platform option. Please re-run the command and pick one of the provided choices.',
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
   if (!DISCORD_ID_RE.test(discordId)) {
     await interaction.reply({ content: 'Discord ID must be numeric.', flags: MessageFlags.Ephemeral });
     return;
