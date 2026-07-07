@@ -20,6 +20,10 @@ for (const [k, v] of Object.entries({
   ROLE_CIV7: '22',
   ROLE_NOVICE: '23',
   ROLE_NON_VERIFIED: '24',
+  ROLE_SERVER_NEWS: '25',
+  ROLE_CIV6_NEWS: '26',
+  ROLE_CIV7_NEWS: '27',
+  ROLE_PC_STEAM: '28',
 })) {
   process.env[k] ??= v;
 }
