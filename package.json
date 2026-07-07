@@ -11,13 +11,14 @@
     "clean": "node --input-type=commonjs -e \"const fs=require('node:fs'); const path=require('node:path'); for (const p of ['dist','tsconfig.tsbuildinfo']) fs.rmSync(path.resolve(p), { recursive: true, force: true });\"",
     "build": "npm run clean && tsc -p tsconfig.json",
     "build:watch": "tsc -p tsconfig.json -w --preserveWatchOutput",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "verify": "npm run typecheck && npm run build && npm run lint",
+    "typecheck": "tsc -p tsconfig.test.json --noEmit",
+    "verify": "npm run typecheck && npm run build && npm run lint && npm test",
     "dev": "tsx watch src/index.ts",
     "dev:deploy": "tsx src/deploy.ts",
     "start": "node --enable-source-maps dist/index.js",
     "deploy": "node --enable-source-maps dist/deploy.js",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "tsx --test tests/*.test.ts"
   },
   "dependencies": {
     "discord.js": "^14.25.1",
