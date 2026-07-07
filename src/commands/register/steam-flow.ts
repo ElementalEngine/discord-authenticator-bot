@@ -13,7 +13,7 @@ import { safeEditReply } from '../../utils/discord-safe.js';
 import { toUserErrorMessage } from '../../utils/error-message.js';
 import { logAuthCommandFailure } from '../../utils/auth-command-failure.js';
 import type { RegisterService } from '../../services/register.service.js';
-import { RegistrationSessionWatchService } from '../../services/registration-session-watch.service.js';
+import { registrationWatchService } from '../../services/register.instance.js';
 
 export async function ensureRegistrationGate(
   interaction: ChatInputCommandInteraction,
@@ -60,7 +60,7 @@ export async function startSteamRegistration(input: {
       components: [buildRegistrationButtons({ authorizeUrl: session.authorize_url, sessionId: session.session_id })],
     });
 
-    new RegistrationSessionWatchService(services).start({
+    registrationWatchService.start({
       interaction,
       sessionId: session.session_id,
       user,

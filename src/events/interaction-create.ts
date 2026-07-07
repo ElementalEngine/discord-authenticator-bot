@@ -6,12 +6,12 @@ export const name = Events.InteractionCreate;
 
 export async function execute(interaction: Interaction): Promise<void> {
   if (interaction.isButton()) {
-    const handled = await handleRegisterInteraction(interaction, client);
+    const handled = await handleRegisterInteraction(interaction);
     if (handled) return;
   }
 
   if (interaction.isModalSubmit()) {
-    const handled = await handleRegisterModal(interaction, client);
+    const handled = await handleRegisterModal(interaction);
     if (handled) return;
   }
 

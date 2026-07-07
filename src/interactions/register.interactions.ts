@@ -1,12 +1,13 @@
 import {
   MessageFlags,
   type ButtonInteraction,
-  type Client,
   type ModalSubmitInteraction,
 } from 'discord.js';
 import { BUTTON_IDS, MODAL_FIELD_IDS, MODAL_IDS } from '../config/constants.js';
-import { RegisterService } from '../services/register.service.js';
-import { RegistrationSessionWatchService } from '../services/registration-session-watch.service.js';
+import {
+  registerService,
+  registrationWatchService,
+} from '../services/register.instance.js';
 import {
   buildRegistrationFailureEmbed,
   buildRegistrationSuccessEmbed,
@@ -27,12 +28,9 @@ function getSessionId(customId: string, prefix: string): string | null {
   return value || null;
 }
 
-export async function handleRegisterInteraction(
-  interaction: ButtonInteraction,
-  client: Client,
-): Promise<boolean> {
-  const services = new RegisterService(client);
-  const watchService = new RegistrationSessionWatchService(services);
+export async function handleRegisterInteraction(interaction: ButtonInteraction): Promise<boolean> {
+  const services = registerService;
+  const watchService = registrationWatchService;
 
   // Civ 7 method selection — Steam API Auth.
   if (interaction.customId === BUTTON_IDS.civ7MethodSteam) {
@@ -133,13 +131,10 @@ export async function handleRegisterInteraction(
   return false;
 }
 
-export async function handleRegisterModal(
-  interaction: ModalSubmitInteraction,
-  client: Client,
-): Promise<boolean> {
+export async function handleRegisterModal(interaction: ModalSubmitInteraction): Promise<boolean> {
   if (interaction.customId !== MODAL_IDS.civ7SelfServiceManual) return false;
 
-  const services = new RegisterService(client);
+  const services = registerService;
 
   if (!interaction.inCachedGuild()) {
     await interaction.reply({

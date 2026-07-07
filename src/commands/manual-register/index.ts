@@ -6,11 +6,9 @@ import { isSupportedGame, isManualRegistrationChoice } from '../../utils/option-
 import { buildManualRegistrationSuccessEmbed } from '../../ui/embeds/register.js';
 import { toUserErrorMessage } from '../../utils/error-message.js';
 import { logAuthCommandFailure } from '../../utils/auth-command-failure.js';
-import { RegisterService } from '../../services/register.service.js';
-import client from '../../client.js';
+import { registerService as services } from '../../services/register.instance.js';
 import { SNOWFLAKE_RE } from '../../utils/patterns.js';
 
-const services = new RegisterService(client);
 
 export const data = new SlashCommandBuilder()
   .setName(COMMAND_NAMES.manualRegister)

@@ -3,10 +3,8 @@ import { COMMAND_NAMES, REGISTER_SUBCOMMANDS } from '../../config/constants.js';
 import { buildCiv6Subcommand, executeCiv6Subcommand } from './civ6.js';
 import { buildCiv7Subcommand, executeCiv7Subcommand } from './civ7.js';
 import { buildAddRankRoleSubcommand, executeAddRankRoleSubcommand } from './add-rank-role.js';
-import { RegisterService } from '../../services/register.service.js';
-import client from '../../client.js';
+import { registerService as services } from '../../services/register.instance.js';
 
-const services = new RegisterService(client);
 
 export const data = new SlashCommandBuilder()
   .setName(COMMAND_NAMES.register)
