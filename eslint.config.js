@@ -36,7 +36,14 @@ export default [
         'error',
         { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
       ],
-      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-floating-promises': [
+        'error',
+        {
+          allowForKnownSafeCalls: [
+            { from: 'package', name: ['test', 'describe', 'it'], package: 'node:test' },
+          ],
+        },
+      ],
       '@typescript-eslint/no-misused-promises': 'error',
     },
   },
