@@ -72,7 +72,7 @@ export function formatLinkedAccountHeading(platform?: RegistrationPlatform | nul
   }
 }
 
-export function formatLinkedAccountEmpty(platform?: RegistrationPlatform | null): string {
+function formatLinkedAccountEmpty(platform?: RegistrationPlatform | null): string {
   switch (platform) {
     case 'epic':
       return 'No linked Epic account found.';

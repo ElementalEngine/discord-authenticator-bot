@@ -7,8 +7,8 @@ import { toUserErrorMessage } from '../../utils/error-message.js';
 import { logAuthCommandFailure } from '../../utils/auth-command-failure.js';
 import { RegisterService } from '../../services/register.service.js';
 import client from '../../client.js';
+import { SNOWFLAKE_RE } from '../../utils/patterns.js';
 
-const DISCORD_ID_RE = /^\d{17,20}$/;
 const services = new RegisterService(client);
 
 export const data = new SlashCommandBuilder()
@@ -41,7 +41,7 @@ export async function execute(interaction: ChatInputCommandInteraction): Promise
     return;
   }
 
-  if (type === LOOKUP_TYPES.discordId && !DISCORD_ID_RE.test(value)) {
+  if (type === LOOKUP_TYPES.discordId && !SNOWFLAKE_RE.test(value)) {
     await interaction.reply({ content: 'Discord ID must be numeric.', flags: MessageFlags.Ephemeral });
     return;
   }

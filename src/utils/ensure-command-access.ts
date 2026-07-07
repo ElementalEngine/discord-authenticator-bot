@@ -1,8 +1,7 @@
 import { MessageFlags, type ChatInputCommandInteraction } from 'discord.js';
 import { config } from '../config/index.js';
 import type { CommandAccessPolicy } from '../config/types.js';
-
-const SNOWFLAKE_RE = /^\d{17,20}$/;
+import { SNOWFLAKE_RE } from './patterns.js';
 
 function uniqSnowflakes(ids: readonly (string | null | undefined)[]): string[] {
   const seen = new Set<string>();

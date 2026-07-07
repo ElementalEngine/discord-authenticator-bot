@@ -1,0 +1,1 @@
+export const SNOWFLAKE_RE = /^\d{17,20}$/;

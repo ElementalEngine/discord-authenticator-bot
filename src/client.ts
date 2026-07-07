@@ -1,9 +1,9 @@
 import { Client, Collection, GatewayIntentBits } from 'discord.js';
 import { existsSync } from 'node:fs';
-import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { Command } from './types/global.js';
+import { walkModuleFiles } from './utils/module-loader.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,25 +14,6 @@ const client = new Client({
 
 client.commands = new Collection<string, Command>();
 
-const runtimeExtension = path.extname(__filename) === '.ts' ? '.ts' : '.js';
-
-function isLoadable(file: string): boolean {
-  return file.endsWith(runtimeExtension) && !file.endsWith('.d.ts') && !file.endsWith('.map');
-}
-
-async function walkFiles(root: string): Promise<string[]> {
-  const results: string[] = [];
-  for (const entry of await readdir(root, { withFileTypes: true })) {
-    const fullPath = path.join(root, entry.name);
-    if (entry.isDirectory()) {
-      results.push(...(await walkFiles(fullPath)));
-      continue;
-    }
-    if (isLoadable(entry.name)) results.push(fullPath);
-  }
-  return results;
-}
-
 let initPromise: Promise<void> | null = null;
 
 async function loadCommands(): Promise<number> {
@@ -42,7 +23,7 @@ async function loadCommands(): Promise<number> {
   }
 
   let loaded = 0;
-  for (const filePath of await walkFiles(commandsPath)) {
+  for (const filePath of await walkModuleFiles(commandsPath)) {
     const mod = (await import(pathToFileURL(filePath).href)) as Partial<Command> & {
       data?: { name?: unknown };
     };
@@ -68,7 +49,7 @@ async function loadEvents(): Promise<number> {
   }
 
   let loaded = 0;
-  for (const filePath of await walkFiles(eventsPath)) {
+  for (const filePath of await walkModuleFiles(eventsPath)) {
     const mod = (await import(pathToFileURL(filePath).href)) as {
       name?: string;
       once?: boolean;
