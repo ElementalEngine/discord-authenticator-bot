@@ -9,13 +9,28 @@ export interface RoleSyncResult {
   skipped: RoleIntent[];
 }
 
-const ROLE_ID_BY_INTENT: Record<Exclude<RoleIntent, 'remove_non_verified'>, string> = {
+type RemoveIntent = 'remove_non_verified' | 'remove_epic';
+type GrantIntent = Exclude<RoleIntent, RemoveIntent>;
+
+const GRANT_ROLE_ID_BY_INTENT: Record<GrantIntent, string | undefined> = {
   [ROLE_INTENTS.grantCiv6Rank]: config.discord.roles.civ6Rank,
   [ROLE_INTENTS.grantCiv7Rank]: config.discord.roles.civ7Rank,
   [ROLE_INTENTS.grantNovice]: config.discord.roles.novice,
+  [ROLE_INTENTS.grantServerNews]: config.discord.roles.serverNews,
+  [ROLE_INTENTS.grantCiv6News]: config.discord.roles.civ6News,
+  [ROLE_INTENTS.grantCiv7News]: config.discord.roles.civ7News,
+  [ROLE_INTENTS.grantPcSteam]: config.discord.roles.pcSteam,
+  [ROLE_INTENTS.grant2kCrossplatform]: config.discord.roles.twoKCrossplatform,
 };
 
-type GrantIntent = Exclude<RoleIntent, 'remove_non_verified'>;
+const REMOVE_ROLE_ID_BY_INTENT: Record<RemoveIntent, string | undefined> = {
+  [ROLE_INTENTS.removeNonVerified]: config.discord.roles.nonVerified,
+  [ROLE_INTENTS.removeEpic]: config.discord.roles.epic,
+};
+
+function isRemoveIntent(intent: RoleIntent): intent is RemoveIntent {
+  return intent === ROLE_INTENTS.removeNonVerified || intent === ROLE_INTENTS.removeEpic;
+}
 
 interface PlannedMutation {
   intent: RoleIntent;
@@ -60,24 +75,29 @@ export class RoleSyncService {
     const plan: PlannedMutation[] = [];
 
     for (const intent of intents) {
-      if (intent === ROLE_INTENTS.removeNonVerified) {
-        const nonVerifiedId = config.discord.roles.nonVerified;
-        if (!member.roles.cache.has(nonVerifiedId)) {
-          plan.push({ intent, action: 'skip', roleId: nonVerifiedId });
+      if (isRemoveIntent(intent)) {
+        const roleId = REMOVE_ROLE_ID_BY_INTENT[intent];
+        if (!roleId) {
+          console.warn(`[role-sync] Skipping ${intent}: role id not configured.`);
+          plan.push({ intent, action: 'skip', roleId: '' });
           continue;
         }
-        this.assertManageable(me, member, nonVerifiedId, intent);
-        plan.push({ intent, action: 'remove', roleId: nonVerifiedId });
+        if (!member.roles.cache.has(roleId)) {
+          plan.push({ intent, action: 'skip', roleId });
+          continue;
+        }
+        this.assertManageable(me, member, roleId, intent);
+        plan.push({ intent, action: 'remove', roleId });
         continue;
       }
 
-      const roleId = ROLE_ID_BY_INTENT[intent as GrantIntent];
-      if (typeof roleId !== 'string') {
-        throw new ApiError({
-          message: `Unknown role intent: ${intent}.`,
-          code: 'ROLE_SYNC_CONFIG_ERROR',
-          status: 500,
-        });
+      // Unknown intents (a newer backend) and intents whose role id env is unset both
+      // land here as undefined: skip and log rather than failing the registration.
+      const roleId = GRANT_ROLE_ID_BY_INTENT[intent];
+      if (!roleId) {
+        console.warn(`[role-sync] Skipping ${intent}: role id not configured or intent unknown.`);
+        plan.push({ intent, action: 'skip', roleId: '' });
+        continue;
       }
       if (member.roles.cache.has(roleId)) {
         plan.push({ intent, action: 'skip', roleId });

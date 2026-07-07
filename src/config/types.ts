@@ -34,6 +34,12 @@ export interface AuthBotConfig {
       civ7Rank: string;
       novice: string;
       nonVerified: string;
+      serverNews: string;
+      civ6News: string;
+      civ7News: string;
+      pcSteam: string;
+      twoKCrossplatform?: string;
+      epic?: string;
     };
   };
 }

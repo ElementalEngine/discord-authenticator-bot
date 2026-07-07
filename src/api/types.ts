@@ -60,7 +60,13 @@ export type RoleIntent =
   | 'grant_civ6_rank'
   | 'grant_civ7_rank'
   | 'grant_novice'
-  | 'remove_non_verified';
+  | 'grant_server_news'
+  | 'grant_civ6_news'
+  | 'grant_civ7_news'
+  | 'grant_pc_steam'
+  | 'grant_2k_crossplatform'
+  | 'remove_non_verified'
+  | 'remove_epic';
 
 export interface RegistrationOperationResponse {
   operation_id: string;

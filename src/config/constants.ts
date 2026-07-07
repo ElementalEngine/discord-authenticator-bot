@@ -22,7 +22,13 @@ export const ROLE_INTENTS = {
   grantCiv6Rank: 'grant_civ6_rank',
   grantCiv7Rank: 'grant_civ7_rank',
   grantNovice: 'grant_novice',
+  grantServerNews: 'grant_server_news',
+  grantCiv6News: 'grant_civ6_news',
+  grantCiv7News: 'grant_civ7_news',
+  grantPcSteam: 'grant_pc_steam',
+  grant2kCrossplatform: 'grant_2k_crossplatform',
   removeNonVerified: 'remove_non_verified',
+  removeEpic: 'remove_epic',
 } as const;
 
 export const GAME_CHOICES = [

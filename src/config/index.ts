@@ -71,6 +71,12 @@ export const config: AuthBotConfig = {
       civ7Rank: required('ROLE_CIV7'),
       novice: required('ROLE_NOVICE'),
       nonVerified: required('ROLE_NON_VERIFIED'),
+      serverNews: required('ROLE_SERVER_NEWS'),
+      civ6News: required('ROLE_CIV6_NEWS'),
+      civ7News: required('ROLE_CIV7_NEWS'),
+      pcSteam: required('ROLE_PC_STEAM'),
+      twoKCrossplatform: optional('ROLE_2K_CROSSPLATFORM'),
+      epic: optional('ROLE_EPIC'),
     },
   },
 };
