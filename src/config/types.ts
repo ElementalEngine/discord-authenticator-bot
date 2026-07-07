@@ -39,7 +39,6 @@ export interface AuthBotConfig {
       civ7News: string;
       pcSteam: string;
       twoKCrossplatform?: string;
-      epic?: string;
     };
   };
 }

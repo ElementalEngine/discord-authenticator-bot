@@ -76,7 +76,6 @@ export const config: AuthBotConfig = {
       civ7News: required('ROLE_CIV7_NEWS'),
       pcSteam: required('ROLE_PC_STEAM'),
       twoKCrossplatform: optional('ROLE_2K_CROSSPLATFORM'),
-      epic: optional('ROLE_EPIC'),
     },
   },
 };

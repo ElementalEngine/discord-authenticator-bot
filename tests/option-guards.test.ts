@@ -13,14 +13,14 @@ test('isSupportedGame rejects out-of-set values', () => {
   }
 });
 
-test('isManualRegistrationChoice accepts all four platforms', () => {
-  for (const value of ['steam', 'steam_family_share', 'epic', '2k']) {
+test('isManualRegistrationChoice accepts all three platforms', () => {
+  for (const value of ['steam', 'steam_family_share', '2k']) {
     assert.equal(isManualRegistrationChoice(value), true, `should accept ${value}`);
   }
 });
 
 test('isManualRegistrationChoice rejects out-of-set values', () => {
-  for (const value of ['xbox', 'Steam', '2K', '', 'steam ']) {
+  for (const value of ['epic', 'xbox', 'Steam', '2K', '', 'steam ']) {
     assert.equal(isManualRegistrationChoice(value), false, `should reject ${JSON.stringify(value)}`);
   }
 });

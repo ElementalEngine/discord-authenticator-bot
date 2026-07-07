@@ -8,7 +8,7 @@ export type RegistrationMethod =
   | 'admin_staff_attested'
   | 'self_service_2k';
 
-export type ManualRegistrationChoice = 'steam' | 'steam_family_share' | 'epic' | '2k';
+export type ManualRegistrationChoice = 'steam' | 'steam_family_share' | '2k';
 
 export type RegistrationSessionStatus =
   | 'pending_auth'
@@ -65,8 +65,7 @@ export type RoleIntent =
   | 'grant_civ7_news'
   | 'grant_pc_steam'
   | 'grant_2k_crossplatform'
-  | 'remove_non_verified'
-  | 'remove_epic';
+  | 'remove_non_verified';
 
 export interface RegistrationOperationResponse {
   operation_id: string;

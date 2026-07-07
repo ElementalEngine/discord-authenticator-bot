@@ -9,7 +9,7 @@ export interface RoleSyncResult {
   skipped: RoleIntent[];
 }
 
-type RemoveIntent = 'remove_non_verified' | 'remove_epic';
+type RemoveIntent = 'remove_non_verified';
 type GrantIntent = Exclude<RoleIntent, RemoveIntent>;
 
 const GRANT_ROLE_ID_BY_INTENT: Record<GrantIntent, string | undefined> = {
@@ -25,11 +25,10 @@ const GRANT_ROLE_ID_BY_INTENT: Record<GrantIntent, string | undefined> = {
 
 const REMOVE_ROLE_ID_BY_INTENT: Record<RemoveIntent, string | undefined> = {
   [ROLE_INTENTS.removeNonVerified]: config.discord.roles.nonVerified,
-  [ROLE_INTENTS.removeEpic]: config.discord.roles.epic,
 };
 
 function isRemoveIntent(intent: RoleIntent): intent is RemoveIntent {
-  return intent === ROLE_INTENTS.removeNonVerified || intent === ROLE_INTENTS.removeEpic;
+  return intent === ROLE_INTENTS.removeNonVerified;
 }
 
 interface PlannedMutation {

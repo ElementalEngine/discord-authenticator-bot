@@ -228,6 +228,18 @@ function roleUpdateLabel(intent: RoleIntent): string {
       return `Added <@&${config.discord.roles.civ7Rank}>`;
     case ROLE_INTENTS.grantNovice:
       return `Added <@&${config.discord.roles.novice}>`;
+    case ROLE_INTENTS.grantServerNews:
+      return `Added <@&${config.discord.roles.serverNews}>`;
+    case ROLE_INTENTS.grantCiv6News:
+      return `Added <@&${config.discord.roles.civ6News}>`;
+    case ROLE_INTENTS.grantCiv7News:
+      return `Added <@&${config.discord.roles.civ7News}>`;
+    case ROLE_INTENTS.grantPcSteam:
+      return `Added <@&${config.discord.roles.pcSteam}>`;
+    case ROLE_INTENTS.grant2kCrossplatform: {
+      const roleId = config.discord.roles.twoKCrossplatform;
+      return roleId ? `Added <@&${roleId}>` : 'Added 2K Cross-platform role';
+    }
     case ROLE_INTENTS.removeNonVerified:
       return `Removed <@&${config.discord.roles.nonVerified}>`;
     default:

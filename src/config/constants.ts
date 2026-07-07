@@ -28,7 +28,6 @@ export const ROLE_INTENTS = {
   grantPcSteam: 'grant_pc_steam',
   grant2kCrossplatform: 'grant_2k_crossplatform',
   removeNonVerified: 'remove_non_verified',
-  removeEpic: 'remove_epic',
 } as const;
 
 export const GAME_CHOICES = [
@@ -39,7 +38,6 @@ export const GAME_CHOICES = [
 export const MANUAL_REGISTER_PLATFORM_CHOICES = [
   { name: 'Steam', value: 'steam' },
   { name: 'Steam Family Share', value: 'steam_family_share' },
-  { name: 'Epic', value: 'epic' },
   { name: '2K', value: '2k' },
 ] as const satisfies ReadonlyArray<{ name: string; value: ManualRegistrationChoice }>;
 
