@@ -40,10 +40,11 @@ export const expired: Panel = notice('refused', 'This sign-in expired. Run `/reg
 export const cancelled: Panel = notice('info', 'Cancelled. Run `/register` whenever you are ready.');
 export const restarting: Panel = notice('refused', 'The bot restarted before your sign-in finished. Run `/register` to start again.');
 
-function roleLines(sync: RoleSync): string[] {
+// Staff registering someone else read about that player, not themselves.
+function roleLines(sync: RoleSync, staff = false): string[] {
   const given = granted(sync.applied);
-  const lines = [given.length ? `Roles: ${given.map(role).join(' ')}` : 'Your roles were already set.'];
-  if (sync.failed.length) lines.push('Some roles could not be set. Staff have been told and will sort them out.');
+  const lines = [given.length ? `Roles: ${given.map(role).join(' ')}` : staff ? 'Their roles were already set.' : 'Your roles were already set.'];
+  if (sync.failed.length) lines.push(staff ? 'Some roles could not be set. The staff log says which to set by hand.' : 'Some roles could not be set. Staff have been told and will sort them out.');
   return lines;
 }
 
@@ -67,7 +68,7 @@ export const registeredBy = (registration: Registration, sync: RoleSync): Panel 
   lines: [
     `Player: <@${registration.discord_user_id}>`,
     `Account: ${account(registration.linked_platform, registration.linked_account_id, registration.linked_account_name)}`,
-    ...roleLines(sync),
+    ...roleLines(sync, true),
   ],
 });
 

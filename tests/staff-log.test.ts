@@ -53,6 +53,7 @@ test('a registration logs one tagged line, plus young-account and role-failure l
     flags: ['young_discord' as const],
   };
   const entries = log.registered(registration, 'staff', ['grant_civ7_rank', 'remove_non_verified'], { id: other, reason: 'family share' });
+  assert.match(entries[0]!.text, new RegExp(` · manual registration · by <@${other}>`));
   assert.deepEqual(entries.map((entry) => entry.text.split(' ')[0]), ['[REGISTERED]', '[YOUNG-ACCOUNT]', '[ERROR]']);
   assert.match(entries[0]!.text, /reason: family share/);
   assert.match(entries[2]!.text, new RegExp(`add <@&${ID.ROLE_CIV7}> and remove <@&${ID.ROLE_NON_VERIFIED}> by hand`));

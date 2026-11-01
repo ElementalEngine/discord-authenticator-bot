@@ -15,7 +15,7 @@ export type Via = 'steam' | '2k' | 'staff' | 'rank role';
 const VIA: Readonly<Record<Via, string>> = {
   steam: 'Steam sign-in',
   '2k': '2K, self-registered',
-  staff: 'by staff',
+  staff: 'manual registration',
   'rank role': 'second rank role',
 };
 
