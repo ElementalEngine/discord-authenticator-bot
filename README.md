@@ -1,40 +1,39 @@
-# Discord Authenticator Bot
+# Auth bot
 
-Lean Discord auth bot for CivCPL. This bot owns Discord UX, policy checks, and role synchronization. The core API owns OAuth, persistence, Steam validation, and auth decisions.
+Registers CPL players. A player proves they own Civilization on Steam by
+signing in with Discord, or registers a 2K account for Civilization VII; staff
+can register a player by hand and look up who holds an account. core-api does
+the checks and keeps the records; this bot is the Discord side and sets roles.
 
 ## Commands
 
-- `/register register game:<civ6|civ7>`
-- `/register add-rank-role game:<civ6|civ7>`
-- `/admin manual-register discord-id:<id> discord-username:<name> game:<civ6|civ7> platform:<steam|epic|xbox> platform-account-id:<id> platform-account-name:<name> [reason:<text>]`
-- `/admin lookup-discord discord-id:<id>`
-- `/admin lookup-linked-account linked-account-id:<id>`
+| Command | Who | Where |
+|---|---|---|
+| `/register civ6`, `/register civ7` | members not yet verified | the welcome channel |
+| `/register add-rank-role game:` | registered players | the civ6 or civ7 commands channel |
+| `/lookup type: value:` | staff | the bot-commands channel |
+| `/manual-register` | staff | the bot-commands channel |
 
-## Backend contract
+Access is one table, `src/config/access.ts`. Every answer is private.
 
-This bot expects the backend auth feature to expose:
+## Staff log
 
-- `POST /api/v1/auth/registration-sessions`
-- `GET /api/v1/auth/registration-sessions/{sessionId}`
-- `POST /api/v1/auth/registration-sessions/{sessionId}/complete`
-- `POST /api/v1/auth/registration-operations/{operationId}/finalize`
-- `POST /api/v1/auth/rank-role-requests`
-- `POST /api/v1/auth/admin/manual-registrations`
-- `GET /api/v1/auth/admin/accounts/discord/{discordId}`
-- `GET /api/v1/auth/admin/accounts/linked-account/{linkedAccountId}`
+One channel, `CHANNEL_AUTHBOT_LOG_ID`, one plain-text line per event, tagged
+first so it can be searched: `[REGISTERED]`, `[CLASH]`, `[YOUNG-ACCOUNT]`,
+`[ERROR]`. The moderator role is mentioned only when a clash names an account
+that is banned from the server, suspended, or at the ban threshold. Reading
+server bans needs the bot to hold **Ban Members**.
 
-## Environment files
+## core-api
 
-- `.env.development` for local/dev runs
-- `.env.production` for production runs
-
-The bot loads `.env.${NODE_ENV}`. When `NODE_ENV` is unset, it defaults to `development`, so local runs load `.env.development`.
+The bot calls `/api/v2/auth/*` on its own service token. The types in
+`src/api/contract.ts` are generated from `contracts/openapi.json`, core-api's
+spec, vendored with `npm run vendor:contracts` (see `contracts/PROVENANCE`).
 
 ## Scripts
 
-- `npm run dev` -> run from source with `tsx watch` (no build)
-- `npm run dev:deploy` -> deploy commands from source in development
-- `npm run build` -> compile to `dist/`
-- `npm run start` -> run the built bot from `dist/`
-- `npm run deploy` -> run the built deploy script from `dist/`
-- `npm run verify` -> typecheck + build + lint
+- `npm run dev`: run from source
+- `npm run build`, `npm start`: build to `dist/` and run it
+- `npm run verify`: typecheck, lint, tests, version pins, build, contracts
+
+Commands are set on Discord each time the bot starts.

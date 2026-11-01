@@ -1,213 +1,102 @@
 import { config } from '../config/index.js';
-import type { SupportedGame } from '../config/types.js';
 import { ApiError } from './errors.js';
 import type {
-  ApiErrorEnvelope,
-  DiscordLookupResponse,
-  FinalizeOperationRequest,
-  LinkedAccountLookupResponse,
-  ManualRegistrationChoice,
-  RegistrationOperationResponse,
-  RegistrationSessionResponse,
-  RegistrationSessionStatusResponse,
-  SelfServiceRegistrationRequest,
+  AccountLookup,
+  Game,
+  ManualRegistration,
+  Registration,
+  SessionStarted,
+  SessionState,
+  TwoKRegistration,
 } from './types.js';
 
 type FetchLike = typeof fetch;
 
+// The retry policy lives here and nowhere else: no call site chooses.
+const ATTEMPTS = 2;
+const BACKOFF_MS = 250;
+
+const path = (...parts: string[]): string => `/api/v2/auth/${parts.map(encodeURIComponent).join('/')}`;
+
 export class ApiClient {
-  private readonly baseUrl: string;
-  private readonly serviceToken: string;
-  private readonly timeoutMs: number;
-  private readonly fetcher: FetchLike;
+  constructor(
+    private readonly base = config.backend.baseUrl,
+    private readonly token = config.backend.serviceToken,
+    private readonly fetcher: FetchLike = fetch,
+    private readonly timeoutMs = config.backend.timeoutMs,
+  ) {}
 
-  constructor(options?: {
-    baseUrl?: string;
-    serviceToken?: string;
-    timeoutMs?: number;
-    fetcher?: FetchLike;
-  }) {
-    this.baseUrl = (options?.baseUrl ?? config.backend.baseUrl).replace(/\/+$/, '');
-    this.serviceToken = options?.serviceToken ?? config.backend.serviceToken;
-    this.timeoutMs = options?.timeoutMs ?? config.requestTimeoutMs;
-    this.fetcher = options?.fetcher ?? fetch;
+  startSession(discordUserId: string, game: Game): Promise<SessionStarted> {
+    return this.call('POST', path('sessions'), { discord_user_id: discordUserId, game });
   }
 
-  async createRegistrationSession(input: {
-    discord_user_id: string;
-    game: SupportedGame;
-  }): Promise<RegistrationSessionResponse> {
-    return this.requestJson<RegistrationSessionResponse>('/api/v1/auth/registration-sessions', {
-      method: 'POST',
-      body: JSON.stringify(input),
-    });
+  session(sessionId: string): Promise<SessionState> {
+    return this.call('GET', path('sessions', sessionId));
   }
 
-  async getRegistrationSession(sessionId: string): Promise<RegistrationSessionStatusResponse> {
-    return this.requestJson<RegistrationSessionStatusResponse>(
-      `/api/v1/auth/registration-sessions/${encodeURIComponent(sessionId)}`,
-      { method: 'GET' },
-    );
+  // A repeat answers the same registration, so a lost answer can be asked for again.
+  complete(sessionId: string, discordUserId: string): Promise<Registration> {
+    return this.call('POST', path('sessions', sessionId, 'complete'), { discord_user_id: discordUserId });
   }
 
-  async completeRegistrationSession(input: {
-    sessionId: string;
-    discord_user_id: string;
-  }): Promise<RegistrationOperationResponse> {
-    return this.requestJson<RegistrationOperationResponse>(
-      `/api/v1/auth/registration-sessions/${encodeURIComponent(input.sessionId)}/complete`,
-      {
-        method: 'POST',
-        body: JSON.stringify({ discord_user_id: input.discord_user_id }),
-      },
-    );
+  rankRole(discordUserId: string, game: Game): Promise<Registration> {
+    return this.call('POST', path('rank-roles'), { discord_user_id: discordUserId, game });
   }
 
-  async finalizeRegistrationOperation(
-    operationId: string,
-    input: FinalizeOperationRequest,
-  ): Promise<void> {
-    await this.requestJson<unknown>(
-      `/api/v1/auth/registration-operations/${encodeURIComponent(operationId)}/finalize`,
-      {
-        method: 'POST',
-        body: JSON.stringify(input),
-      },
-    );
+  registerTwoK(body: TwoKRegistration): Promise<Registration> {
+    return this.call('POST', path('2k-registrations'), body);
   }
 
-  async requestRankRole(input: {
-    discord_user_id: string;
-    game: SupportedGame;
-  }): Promise<RegistrationOperationResponse> {
-    return this.requestJson<RegistrationOperationResponse>('/api/v1/auth/rank-role-requests', {
-      method: 'POST',
-      body: JSON.stringify(input),
-    });
+  // Sent only after the bot has checked the caller's staff role.
+  registerManually(staffId: string, body: ManualRegistration): Promise<Registration> {
+    return this.call('POST', path('manual-registrations'), body, { 'x-actor-discord-id': staffId, 'x-actor-is-staff': 'true' });
   }
 
-  async manualRegister(input: {
-    actor_discord_id: string;
-    subject_discord_id: string;
-    platform: ManualRegistrationChoice;
-    platform_account_id: string;
-    platform_account_name?: string | null;
-    game: SupportedGame;
-    reason?: string;
-    discord_username?: string | null;
-    discord_display_name?: string | null;
-  }): Promise<RegistrationOperationResponse> {
-    return this.requestJson<RegistrationOperationResponse>(
-      '/api/v1/auth/admin/manual-registrations',
-      {
-        method: 'POST',
-        body: JSON.stringify(input),
-      },
-    );
+  lookupDiscord(discordId: string): Promise<AccountLookup> {
+    return this.call('GET', path('accounts', 'discord', discordId));
   }
 
-  async selfServiceRegister(
-    input: SelfServiceRegistrationRequest,
-  ): Promise<RegistrationOperationResponse> {
-    return this.requestJson<RegistrationOperationResponse>(
-      '/api/v1/auth/manual-registration-requests',
-      {
-        method: 'POST',
-        body: JSON.stringify(input),
-      },
-    );
+  lookupLinked(accountId: string): Promise<AccountLookup> {
+    return this.call('GET', path('accounts', 'linked', accountId));
   }
 
-  async lookupByDiscordId(discordId: string): Promise<DiscordLookupResponse> {
-    return this.requestJson<DiscordLookupResponse>(
-      `/api/v1/auth/admin/accounts/discord/${encodeURIComponent(discordId)}`,
-      { method: 'GET' },
-    );
+  // core-api's retryable flag decides a second attempt on any method. A transport
+  // failure may hide a write that landed, so then only a read is sent again.
+  private static shouldRetry(error: unknown, method: string): boolean {
+    if (error instanceof ApiError && error.error) return error.error.retryable === true;
+    if (error instanceof ApiError && error.status < 500) return false;
+    return method === 'GET';
   }
 
-  async lookupByLinkedAccountId(linkedAccountId: string): Promise<LinkedAccountLookupResponse> {
-    return this.requestJson<LinkedAccountLookupResponse>(
-      `/api/v1/auth/admin/accounts/linked-account/${encodeURIComponent(linkedAccountId)}`,
-      { method: 'GET' },
-    );
-  }
-
-  private async requestJson<T>(path: string, init: RequestInit): Promise<T> {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
-
-    try {
-      const response = await this.fetcher(`${this.baseUrl}${path}`, {
-        ...init,
-        headers: {
-          Accept: 'application/json',
-          Authorization: `Bearer ${this.serviceToken}`,
-          ...(init.body ? { 'Content-Type': 'application/json' } : {}),
-          ...(init.headers ?? {}),
-        },
-        signal: controller.signal,
-      });
-
-      const text = await response.text();
-      const parsed = text ? tryParseJson(text) : null;
-
-      if (!response.ok) {
-        throw toApiError(response.status, parsed);
-      }
-
-      return parsed as T;
-    } catch (error) {
-      if (error instanceof ApiError) throw error;
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        throw new ApiError({
-          message: 'The auth backend did not respond in time.',
-          code: 'BACKEND_TIMEOUT',
-          status: 504,
-          retryable: true,
+  private async call<T>(method: 'GET' | 'POST', route: string, body?: unknown, extra: Record<string, string> = {}): Promise<T> {
+    const headers = { accept: 'application/json', authorization: `Bearer ${this.token}`, ...extra, ...(body === undefined ? {} : { 'content-type': 'application/json' }) };
+    for (let attempt = 1; ; attempt++) {
+      try {
+        // The signal covers reading the body too.
+        const res = await this.fetcher(`${this.base}${route}`, {
+          method,
+          headers,
+          body: body === undefined ? undefined : JSON.stringify(body),
+          signal: AbortSignal.timeout(this.timeoutMs),
         });
+        const parsed = parseJson(await res.text());
+        if (!res.ok || parsed === undefined) throw new ApiError(res.status, parsed);
+        return parsed as T;
+      } catch (error) {
+        if (attempt >= ATTEMPTS || !ApiClient.shouldRetry(error, method)) throw error;
+        await new Promise((resolve) => setTimeout(resolve, BACKOFF_MS * (1 + Math.random())));
       }
-
-      throw new ApiError({
-        message: 'Failed to reach the auth backend.',
-        code: 'BACKEND_UNAVAILABLE',
-        status: 503,
-        retryable: true,
-        details: error,
-      });
-    } finally {
-      clearTimeout(timeout);
     }
   }
 }
 
-function tryParseJson(value: string): unknown {
+// A body that is not JSON, such as a proxy's error page, is undefined.
+function parseJson(text: string): unknown {
   try {
-    return JSON.parse(value) as unknown;
+    return text ? (JSON.parse(text) as unknown) : null;
   } catch {
-    return value;
+    return undefined;
   }
 }
 
-function toApiError(status: number, parsed: unknown): ApiError {
-  const envelope = parsed as ApiErrorEnvelope | null;
-  const error = envelope?.error ?? envelope?.detail?.error;
-
-  if (error?.code && error?.message) {
-    return new ApiError({
-      message: error.message,
-      code: error.code,
-      status,
-      retryable: error.retryable ?? false,
-      correlationId: error.correlation_id,
-      details: error.details,
-    });
-  }
-
-  return new ApiError({
-    message: typeof parsed === 'string' && parsed ? parsed : 'Unexpected backend error.',
-    code: `HTTP_${status}`,
-    status,
-    retryable: status >= 500,
-    details: parsed,
-  });
-}
+export const api = new ApiClient();
