@@ -24,176 +24,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/auth/admin/accounts/discord/{discord_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Lookup Account By Discord */
-        get: operations["lookup_account_by_discord_api_v1_auth_admin_accounts_discord__discord_id__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/auth/admin/accounts/linked-account/{linked_account_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Lookup Account By Linked Account */
-        get: operations["lookup_account_by_linked_account_api_v1_auth_admin_accounts_linked_account__linked_account_id__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/auth/admin/accounts/steam/{steam_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Lookup Account By Steam */
-        get: operations["lookup_account_by_steam_api_v1_auth_admin_accounts_steam__steam_id__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/auth/admin/manual-registrations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create Manual Registration */
-        post: operations["create_manual_registration_api_v1_auth_admin_manual_registrations_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/auth/manual-registration-requests": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create Self Service Registration */
-        post: operations["create_self_service_registration_api_v1_auth_manual_registration_requests_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/auth/rank-role-requests": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create Rank Role Request */
-        post: operations["create_rank_role_request_api_v1_auth_rank_role_requests_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/auth/registration-operations/{operation_id}/finalize": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Finalize Registration Operation */
-        post: operations["finalize_registration_operation_api_v1_auth_registration_operations__operation_id__finalize_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/auth/registration-sessions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create Registration Session */
-        post: operations["create_registration_session_api_v1_auth_registration_sessions_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/auth/registration-sessions/{session_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Registration Session */
-        get: operations["get_registration_session_api_v1_auth_registration_sessions__session_id__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/auth/registration-sessions/{session_id}/complete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Complete Registration Session */
-        post: operations["complete_registration_session_api_v1_auth_registration_sessions__session_id__complete_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/infractions/active": {
         parameters: {
             query?: never;
@@ -1583,11 +1413,6 @@ export interface components {
             /** Token */
             token: string;
         };
-        /** CompleteRegistrationSessionRequest */
-        CompleteRegistrationSessionRequest: {
-            /** Discord User Id */
-            discord_user_id: string;
-        };
         /** ContestBody */
         ContestBody: {
             /** Reason */
@@ -1607,14 +1432,6 @@ export interface components {
             /** Reason */
             reason?: string | null;
         };
-        /** CreateRegistrationSessionRequest */
-        CreateRegistrationSessionRequest: {
-            /** Discord User Id */
-            discord_user_id: string;
-            game: components["schemas"]["SupportedGame"];
-            /** @default steam */
-            platform: components["schemas"]["RegistrationPlatform"];
-        };
         /** DealtBans */
         DealtBans: {
             /** Civ */
@@ -1628,47 +1445,6 @@ export interface components {
             civs: string[];
             /** Leaders */
             leaders: string[];
-        };
-        /** DiscordAccountLookupHit */
-        DiscordAccountLookupHit: {
-            /** Discord Display Name */
-            discord_display_name?: string | null;
-            /** Discord Id */
-            discord_id: string;
-            /** Discord Username */
-            discord_username?: string | null;
-            /** Registrations */
-            registrations?: components["schemas"]["RegistrationSummary"][];
-        };
-        /** DiscordLookupResponse */
-        DiscordLookupResponse: {
-            /** Discord Display Name */
-            discord_display_name?: string | null;
-            /** Discord Id */
-            discord_id: string;
-            /** Discord Username */
-            discord_username?: string | null;
-            /** Linked Accounts */
-            linked_accounts?: components["schemas"]["LinkedAccountLookupHit"][];
-        };
-        /** DiscordOAuthCallbackResult */
-        DiscordOAuthCallbackResult: {
-            /** Details */
-            details?: {
-                [key: string]: unknown;
-            };
-            /** Failure Code */
-            failure_code?: string | null;
-            /** Failure Message */
-            failure_message?: string | null;
-            /** Linked Account Id */
-            linked_account_id?: string | null;
-            /** Linked Account Name */
-            linked_account_name?: string | null;
-            platform: components["schemas"]["RegistrationPlatform"];
-            /** Session Id */
-            session_id: string;
-            status: components["schemas"]["RegistrationSessionStatus"];
         };
         /** DraftDeal */
         DraftDeal: {
@@ -1718,20 +1494,6 @@ export interface components {
             message: string;
             /** Retryable */
             retryable?: boolean | null;
-        };
-        /** FinalizeRegistrationOperationRequest */
-        FinalizeRegistrationOperationRequest: {
-            /** Applied Role Intents */
-            applied_role_intents?: components["schemas"]["RoleIntent"][];
-            /** Failure Code */
-            failure_code?: string | null;
-            /** Failure Message */
-            failure_message?: string | null;
-            /**
-             * Result
-             * @enum {string}
-             */
-            result: "succeeded" | "failed";
         };
         /** FlatSuspensionResponse */
         FlatSuspensionResponse: {
@@ -1849,26 +1611,6 @@ export interface components {
             last_updated: number;
             /** Rankings */
             rankings: components["schemas"]["PlayerLeaderboard"][];
-        };
-        /** LinkedAccountLookupHit */
-        LinkedAccountLookupHit: {
-            /** Linked Account Id */
-            linked_account_id: string;
-            /** Linked Account Name */
-            linked_account_name?: string | null;
-            linked_platform?: components["schemas"]["RegistrationPlatform"] | null;
-            /** Registrations */
-            registrations?: components["schemas"]["RegistrationSummary"][];
-        };
-        /** LinkedAccountLookupResponse */
-        LinkedAccountLookupResponse: {
-            /** Discord Accounts */
-            discord_accounts?: components["schemas"]["DiscordAccountLookupHit"][];
-            /** Linked Account Id */
-            linked_account_id: string;
-            /** Linked Account Name */
-            linked_account_name?: string | null;
-            linked_platform?: components["schemas"]["RegistrationPlatform"] | null;
         };
         /**
          * LobbyBallot
@@ -2078,25 +1820,6 @@ export interface components {
          * @enum {string}
          */
         ManualRegistrationChoice: "steam" | "steam_family_share" | "2k";
-        /** ManualRegistrationRequest */
-        ManualRegistrationRequest: {
-            /** Actor Discord Id */
-            actor_discord_id: string;
-            /** Discord Display Name */
-            discord_display_name?: string | null;
-            /** Discord Username */
-            discord_username?: string | null;
-            game: components["schemas"]["SupportedGame"];
-            platform: components["schemas"]["ManualRegistrationChoice"];
-            /** Platform Account Id */
-            platform_account_id: string;
-            /** Platform Account Name */
-            platform_account_name?: string | null;
-            /** Reason */
-            reason?: string | null;
-            /** Subject Discord Id */
-            subject_discord_id: string;
-        };
         /**
          * MapRecord
          * @description Games on a map, those whose rating went up, and first places.
@@ -2251,12 +1974,6 @@ export interface components {
             discord_user_id: string;
             game: components["schemas"]["SupportedGame"];
         };
-        /** RankRoleRequest */
-        RankRoleRequest: {
-            /** Discord User Id */
-            discord_user_id: string;
-            game: components["schemas"]["SupportedGame"];
-        };
         /** RecordFlatSuspensionRequest */
         RecordFlatSuspensionRequest: {
             /** Reason */
@@ -2313,90 +2030,11 @@ export interface components {
          * @enum {string}
          */
         RegistrationMethod: "oauth_steam_api" | "admin_steam_family_share" | "admin_staff_attested" | "self_service_2k";
-        /** RegistrationOperationResponse */
-        RegistrationOperationResponse: {
-            /** Discord User Id */
-            discord_user_id: string;
-            game: components["schemas"]["SupportedGame"];
-            /** Linked Account Id */
-            linked_account_id?: string | null;
-            /** Linked Account Name */
-            linked_account_name?: string | null;
-            linked_platform?: components["schemas"]["RegistrationPlatform"] | null;
-            /** Operation Id */
-            operation_id: string;
-            registration_method?: components["schemas"]["RegistrationMethod"] | null;
-            /** Role Intents */
-            role_intents: components["schemas"]["RoleIntent"][];
-            status?: components["schemas"]["RegistrationOperationStatus"] | null;
-            /** Steam Id */
-            steam_id: string;
-            /** Steam Name */
-            steam_name?: string | null;
-        };
-        /**
-         * RegistrationOperationStatus
-         * @enum {string}
-         */
-        RegistrationOperationStatus: "pending" | "succeeded" | "failed";
         /**
          * RegistrationPlatform
          * @enum {string}
          */
         RegistrationPlatform: "steam" | "epic" | "2k" | "xbox";
-        /** RegistrationSessionResponse */
-        RegistrationSessionResponse: {
-            /** Authorize Url */
-            authorize_url: string;
-            /**
-             * Expires At
-             * Format: date-time
-             */
-            expires_at: string;
-            /** Session Id */
-            session_id: string;
-        };
-        /**
-         * RegistrationSessionStatus
-         * @enum {string}
-         */
-        RegistrationSessionStatus: "pending_auth" | "validating" | "validated" | "failed" | "expired" | "completed";
-        /** RegistrationSessionStatusResponse */
-        RegistrationSessionStatusResponse: {
-            /** Discord Display Name */
-            discord_display_name?: string | null;
-            /** Discord Locale */
-            discord_locale?: string | null;
-            /** Discord Mfa Enabled */
-            discord_mfa_enabled?: boolean | null;
-            /** Discord Username */
-            discord_username?: string | null;
-            /** Discord Verified */
-            discord_verified?: boolean | null;
-            /** Expires At */
-            expires_at?: string | null;
-            /** Failure Code */
-            failure_code?: string | null;
-            /** Failure Message */
-            failure_message?: string | null;
-            game?: components["schemas"]["SupportedGame"] | null;
-            /** Linked Account Id */
-            linked_account_id?: string | null;
-            /** Linked Account Name */
-            linked_account_name?: string | null;
-            platform?: components["schemas"]["RegistrationPlatform"] | null;
-            /** Session Id */
-            session_id: string;
-            status: components["schemas"]["RegistrationSessionStatus"];
-        };
-        /** RegistrationSummary */
-        RegistrationSummary: {
-            game: components["schemas"]["SupportedGame"];
-            /** Method */
-            method?: string | null;
-            /** Registered At */
-            registered_at?: string | null;
-        };
         /** RemoveTierRequest */
         RemoveTierRequest: {
             category: components["schemas"]["TierCategory"];
@@ -2505,24 +2143,6 @@ export interface components {
             seat: number;
             /** Sub Out */
             sub_out?: string | null;
-        };
-        /**
-         * SelfServiceRegistrationRequest
-         * @description Civ7 non-Steam self-service registration (currently 2K only).
-         */
-        SelfServiceRegistrationRequest: {
-            /** Discord Display Name */
-            discord_display_name?: string | null;
-            /** Discord User Id */
-            discord_user_id: string;
-            /** Discord Username */
-            discord_username?: string | null;
-            game: components["schemas"]["SupportedGame"];
-            platform: components["schemas"]["RegistrationPlatform"];
-            /** Platform Account Id */
-            platform_account_id: string;
-            /** Platform Account Name */
-            platform_account_name?: string | null;
         };
         /** SessionComplete */
         SessionComplete: {
@@ -3004,352 +2624,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
-                };
-            };
-        };
-    };
-    lookup_account_by_discord_api_v1_auth_admin_accounts_discord__discord_id__get: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path: {
-                discord_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DiscordLookupResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    lookup_account_by_linked_account_api_v1_auth_admin_accounts_linked_account__linked_account_id__get: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path: {
-                linked_account_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LinkedAccountLookupResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    lookup_account_by_steam_api_v1_auth_admin_accounts_steam__steam_id__get: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path: {
-                steam_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["LinkedAccountLookupResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_manual_registration_api_v1_auth_admin_manual_registrations_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ManualRegistrationRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RegistrationOperationResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_self_service_registration_api_v1_auth_manual_registration_requests_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SelfServiceRegistrationRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RegistrationOperationResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_rank_role_request_api_v1_auth_rank_role_requests_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RankRoleRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RegistrationOperationResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    finalize_registration_operation_api_v1_auth_registration_operations__operation_id__finalize_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path: {
-                operation_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["FinalizeRegistrationOperationRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_registration_session_api_v1_auth_registration_sessions_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateRegistrationSessionRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RegistrationSessionResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_registration_session_api_v1_auth_registration_sessions__session_id__get: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path: {
-                session_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RegistrationSessionStatusResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    complete_registration_session_api_v1_auth_registration_sessions__session_id__complete_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path: {
-                session_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CompleteRegistrationSessionRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RegistrationOperationResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -5846,7 +5120,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DiscordOAuthCallbackResult"];
+                    "text/html": string;
                 };
             };
             /** @description Validation Error */
