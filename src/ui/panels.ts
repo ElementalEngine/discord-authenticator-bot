@@ -39,6 +39,7 @@ export const checking = (game: Game): Panel => notice('working', `Signed in. Che
 export const expired: Panel = notice('refused', 'This sign-in expired. Run `/register` to start again.');
 export const cancelled: Panel = notice('info', 'Cancelled. Run `/register` whenever you are ready.');
 export const restarting: Panel = notice('refused', 'The bot restarted before your sign-in finished. Run `/register` to start again.');
+export const unconfirmed: Panel = notice('failed', "We couldn't confirm your registration. Staff have been told and will check it.");
 
 // Staff registering someone else read about that player, not themselves.
 function roleLines(sync: RoleSync, staff = false): string[] {
@@ -92,7 +93,6 @@ function recordLines(record: AccountRecord): string[] {
 export const lookup = (result: AccountLookup, query: string): Panel => ({
   tone: result.records.length > 1 ? 'refused' : 'info',
   title: `Lookup: \`${query}\``,
-  lines: result.records.length
-    ? [...(result.records.length > 1 ? [`‼️ ${result.records.length} records hold this id. Worth a look.`] : []), ...result.records.flatMap(recordLines)]
-    : ['No records hold this id.'],
+  // core-api answers 404 when no record holds the id, so there is always one here.
+  lines: [...(result.records.length > 1 ? [`‼️ ${result.records.length} records hold this id. Worth a look.`] : []), ...result.records.flatMap(recordLines)],
 });

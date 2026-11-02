@@ -73,6 +73,7 @@ test('a sign-in waits out an outage or silence, and ends on any other answer', (
   assert.equal(waitOut(new ApiError(502, '<html>')), true);
   assert.equal(waitOut(answer(409, 'STEAM_ID_CONFLICT', 'x')), false);
   assert.equal(waitOut(answer(500, 'INTERNAL', 'x')), false);
+  assert.equal(waitOut(new TypeError('settle is not a function')), false);
 });
 
 test("a proxy's 4xx is our fault, not an outage to wait out", () => {

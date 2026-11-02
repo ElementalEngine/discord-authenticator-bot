@@ -33,13 +33,15 @@ type Watch = {
 // Watches live in memory: after a restart a player runs /register again.
 class SessionWatch {
   private readonly watches = new Map<string, Watch>();
-  private readonly finishing = new Set<Promise<void>>();
+  // Registrations core-api was asked for, by session, until it answers.
+  private readonly finishing = new Map<string, Promise<void>>();
   private stopping = false;
 
   constructor(private readonly api: ApiClient) {}
 
   async start(interaction: Started, member: GuildMember, game: Game): Promise<void> {
     const session = await this.api.startSession(member.id, game);
+    if (this.stopping) return show(interaction, panels.restarting);
     const older = this.watches.get(member.id);
     this.end(member.id);
     // Saved before any await, so a second start at the same moment replaces this one cleanly.
@@ -52,10 +54,13 @@ class SessionWatch {
     if (this.live(watch)) this.next(watch);
   }
 
-  // A Cancel stops only the sign-in its message shows, and never one core-api was asked to register.
-  cancel(userId: string, sessionId: string): void {
+  // A Cancel stops only the sign-in its message shows, and never one core-api was
+  // asked to register: then it answers false and the registration runs on.
+  cancel(userId: string, sessionId: string): boolean {
     const watch = this.watches.get(userId);
-    if (watch?.sessionId === sessionId && !watch.asked) this.end(userId);
+    if (this.finishing.has(sessionId) || (watch?.sessionId === sessionId && watch.asked)) return false;
+    if (watch?.sessionId === sessionId) this.end(userId);
+    return true;
   }
 
   // Players still signing in are told to start again, a registration already
@@ -64,13 +69,7 @@ class SessionWatch {
     this.stopping = true;
     const open = [...this.watches.values()];
     for (const watch of open) this.end(watch.member.id);
-    await Promise.all([
-      ...this.finishing,
-      ...open.map(async (watch) => {
-        if (watch.asked) await staffLog.post(watch.interaction.client, [this.unconfirmed(watch)]);
-        await show(watch.interaction, panels.restarting);
-      }),
-    ]);
+    await Promise.all([...this.finishing.values(), ...open.map((watch) => (watch.asked ? this.unknown(watch) : show(watch.interaction, panels.restarting)))]);
   }
 
   private end(userId: string): void {
@@ -80,6 +79,12 @@ class SessionWatch {
 
   private unconfirmed(watch: Watch): staffLog.Entry {
     return staffLog.error(watch.member.id, 'confirm a Steam registration', 'core-api was asked to register them; check /lookup and their roles');
+  }
+
+  // core-api was asked to register them and never said whether it did.
+  private async unknown(watch: Watch): Promise<void> {
+    await staffLog.post(watch.interaction.client, [this.unconfirmed(watch)]);
+    await show(watch.interaction, panels.unconfirmed);
   }
 
   private live(watch: Watch): boolean {
@@ -96,9 +101,15 @@ class SessionWatch {
     await show(watch.interaction, panel);
   }
 
+  private async expire(watch: Watch): Promise<void> {
+    if (!watch.asked) return this.close(watch, panels.expired);
+    this.end(watch.member.id);
+    return this.unknown(watch);
+  }
+
   private async tick(watch: Watch): Promise<void> {
     if (!this.live(watch)) return;
-    if (!watch.asked && Date.now() >= watch.endsAt) return this.close(watch, panels.expired);
+    if (Date.now() >= watch.endsAt) return this.expire(watch);
     let state: SessionState;
     try {
       state = await this.api.session(watch.sessionId);
@@ -119,7 +130,7 @@ class SessionWatch {
       case 'failed':
         return this.close(watch, await this.storedFailure(watch, state));
       case 'expired':
-        return this.close(watch, panels.expired);
+        return this.expire(watch);
       default:
         return this.next(watch);
     }
@@ -131,8 +142,8 @@ class SessionWatch {
     clearTimeout(watch.timer);
     this.watches.delete(watch.member.id);
     watch.asked = true;
-    const done = this.finish(watch).finally(() => this.finishing.delete(done));
-    this.finishing.add(done);
+    const done = this.finish(watch).finally(() => this.finishing.delete(watch.sessionId));
+    this.finishing.set(watch.sessionId, done);
     return done;
   }
 
@@ -156,7 +167,8 @@ class SessionWatch {
 
   // After core-api was asked, no answer or a vanished session leaves the outcome unknown.
   private async failure(watch: Watch, error: unknown): Promise<Panel> {
-    if (watch.asked && (waitOut(error) || (error instanceof ApiError && error.code === 'REGISTRATION_SESSION_NOT_FOUND'))) {
+    const unanswered = !(error instanceof ApiError) || waitOut(error) || error.code === 'REGISTRATION_SESSION_NOT_FOUND';
+    if (watch.asked && unanswered) {
       await staffLog.post(watch.interaction.client, [this.unconfirmed(watch)]);
     }
     return failed(watch.interaction.guild, watch.member.id, error, 'finish a Steam registration');

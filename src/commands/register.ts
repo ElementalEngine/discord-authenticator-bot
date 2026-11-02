@@ -69,8 +69,8 @@ export async function press(interaction: ButtonInteraction<'cached'>): Promise<v
   if (id === IDS.civ7TwoK) return interaction.showModal(twoK);
   const cancelled = panels.sessionOfCancel(id);
   if (cancelled) {
-    watch.cancel(interaction.user.id, cancelled);
-    return redraw(interaction, panels.cancelled);
+    if (watch.cancel(interaction.user.id, cancelled)) return redraw(interaction, panels.cancelled);
+    return show(interaction, notice('info', 'Too late to cancel: your registration is being finished. The message above updates when it is done.'));
   }
   return show(interaction, notice('refused', 'This button has expired. Run `/register` again.'));
 }

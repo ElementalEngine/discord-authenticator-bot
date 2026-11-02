@@ -74,6 +74,12 @@ test("a proxy's error page becomes an ApiError with no envelope", async () => {
   });
 });
 
+test('a success with no body is an error, never an empty answer', async () => {
+  const { fetcher, calls } = scripted(new Response('', { status: 200 }));
+  await assert.rejects(client(fetcher).session('s1'), (error: unknown) => error instanceof ApiError && error.status === 200);
+  assert.equal(calls.length, 1);
+});
+
 test('a call that outlives its timeout is aborted', async () => {
   const hang = ((_input: string | URL, init?: RequestInit) =>
     new Promise((_resolve, reject) => init?.signal?.addEventListener('abort', () => reject(init.signal?.reason)))) as typeof fetch;

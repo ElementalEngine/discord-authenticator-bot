@@ -21,7 +21,8 @@ const poll = async (): Promise<void> => {
   await settle();
 };
 
-let ids = 300000000000000100;
+// Ids are past a double's exact range, so they count as BigInts.
+let ids = 300000000000000100n;
 
 // A player mid-registration: what they were shown, and what staff were told.
 function player() {
@@ -71,7 +72,7 @@ test('a registration core-api makes is acted on even when the player cancels mea
   const complete = heldComplete();
   await watch.start(p.interaction, p.member, 'civ6');
   await poll();
-  watch.cancel(p.id, 's-cancel');
+  assert.equal(watch.cancel(p.id, 's-cancel'), false);
   complete.answer(registration(p.id));
   await settle();
   assert.match(p.last(), /Registered for Civilization VI/);
@@ -87,7 +88,7 @@ test('an unanswered registration is asked for again, and a cancel cannot stop it
   await poll();
   complete.fail(timeout());
   await settle();
-  watch.cancel(p.id, 's-again');
+  assert.equal(watch.cancel(p.id, 's-again'), false);
   api.session = state('completed');
   await poll();
   complete.answer(registration(p.id));
@@ -136,7 +137,9 @@ test('a stale Cancel does not stop the current sign-in', async () => {
   watch.cancel(p.id, 's-stale-1');
   await poll();
   assert.deepEqual(polled, ['s-stale-2']);
-  watch.cancel(p.id, 's-stale-2');
+  assert.equal(watch.cancel(p.id, 's-stale-2'), true);
+  await poll();
+  assert.deepEqual(polled, ['s-stale-2']);
 });
 
 test('a clash on complete ends the sign-in, tells the player plainly and staff fully', async () => {
@@ -165,33 +168,65 @@ test('a sign-in nobody finishes ends as expired', async () => {
   assert.match(p.last(), /sign-in expired/);
 });
 
-// Last two: a shutdown leaves the shared watch stopping.
-test('a shutdown with a registration still waiting on core-api tells staff and the player', async () => {
+test('a registration whose answer never comes is handed to staff when its session expires', async () => {
   const p = player();
-  api.startSession = started('s-open');
+  api.startSession = started('s-lost');
   api.session = state('validated');
   const complete = heldComplete();
   await watch.start(p.interaction, p.member, 'civ6');
   await poll();
   complete.fail(timeout());
   await settle();
-  await watch.stopAll();
+  api.session = state('expired');
+  await poll();
   assert.ok(p.staff.some((line) => line.includes('confirm a Steam registration')));
-  assert.match(p.last(), /restarted/);
+  assert.match(p.last(), /couldn't confirm your registration/);
 });
 
-test('a shutdown during an unanswered registration tells staff and the player, and leaves no timer', async () => {
+test('a bug after core-api was asked is not asked again forever: staff confirm it', async () => {
   const p = player();
-  api.startSession = started('s-stop');
+  api.startSession = started('s-bug');
   api.session = state('validated');
-  const complete = heldComplete();
+  let calls = 0;
+  api.complete = async () => {
+    calls += 1;
+    throw new TypeError('settle is not a function');
+  };
   await watch.start(p.interaction, p.member, 'civ6');
   await poll();
+  await poll();
+  assert.equal(calls, 1);
+  assert.ok(p.staff.some((line) => line.includes('confirm a Steam registration')));
+  assert.match(p.last(), /Staff have been told/);
+});
+
+// Last: a shutdown leaves the shared watch stopping.
+test('a shutdown hands every unanswered registration to staff, tells each player, and refuses new sign-ins', async () => {
+  const waiting = player();
+  const inFlight = player();
+  const late = player();
+  let n = 0;
+  api.startSession = async () => started(`s-stop-${++n}`)();
+  api.session = state('validated');
+  let complete = heldComplete();
+  await watch.start(waiting.interaction, waiting.member, 'civ6');
+  await poll();
+  complete.fail(timeout());
+  await settle();
+  // The first is now waiting out the outage; the second is mid-registration.
+  api.session = async (sessionId: string) => (sessionId === 's-stop-1' ? state('pending_auth')() : state('validated')());
+  complete = heldComplete();
+  await watch.start(inFlight.interaction, inFlight.member, 'civ6');
+  await poll();
   const stopping = watch.stopAll();
+  await watch.start(late.interaction, late.member, 'civ6');
   complete.fail(timeout());
   await stopping;
-  assert.ok(p.staff.some((line) => line.includes('confirm a Steam registration')));
-  assert.match(p.last(), /didn't answer/);
+  assert.ok(waiting.staff.some((line) => line.includes('confirm a Steam registration')));
+  assert.match(waiting.last(), /couldn't confirm your registration/);
+  assert.ok(inFlight.staff.some((line) => line.includes('confirm a Steam registration')));
+  assert.match(inFlight.last(), /didn't answer/);
+  assert.match(late.last(), /restarted/);
   let polls = 0;
   api.session = async () => {
     polls += 1;

@@ -47,8 +47,8 @@ export function failureOf(error: unknown): Failure {
 }
 
 // Whether a Steam sign-in should wait for its next poll rather than end: an
-// outage core-api calls retryable, or no answer at all.
+// outage core-api calls retryable, or no answer at all. A bug of ours is not waited out.
 export function waitOut(error: unknown): boolean {
-  if (!(error instanceof ApiError)) return true;
+  if (!(error instanceof ApiError)) return unreachable(error);
   return error.status >= 500 && (error.error === null || error.error.retryable === true);
 }

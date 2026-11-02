@@ -80,7 +80,7 @@ export class ApiClient {
           signal: AbortSignal.timeout(this.timeoutMs),
         });
         const parsed = parseJson(await res.text());
-        if (!res.ok || parsed === undefined) throw new ApiError(res.status, parsed);
+        if (!res.ok || parsed === undefined || parsed === null) throw new ApiError(res.status, parsed);
         return parsed as T;
       } catch (error) {
         if (attempt >= ATTEMPTS || !ApiClient.shouldRetry(error, method)) throw error;
@@ -90,7 +90,8 @@ export class ApiClient {
   }
 }
 
-// A body that is not JSON, such as a proxy's error page, is undefined.
+// A body that is not JSON, such as a proxy's error page, is undefined; no body is null.
+// Either is an error on a success, since every route answers with JSON.
 function parseJson(text: string): unknown {
   try {
     return text ? (JSON.parse(text) as unknown) : null;

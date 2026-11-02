@@ -43,12 +43,12 @@ export async function run(interaction: ChatInputCommandInteraction<'cached'>): P
   if (platform !== '2k' && !STEAM_ID.test(accountId)) refuse('A Steam id is 17 digits starting 7656119.');
 
   await defer(interaction);
-  // Fetched fresh: the bot has no member events, so its cache can be stale.
-  const member = await interaction.guild.members.fetch({ user: discordId, force: true }).catch((error: unknown) => {
-    if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownMember) return refuse('That player is not in this server.');
-    throw error;
-  });
   try {
+    // Fetched fresh: the bot has no member events, so its cache can be stale.
+    const member = await interaction.guild.members.fetch({ user: discordId, force: true }).catch((error: unknown) => {
+      if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownMember) return refuse('That player is not in this server.');
+      throw error;
+    });
     const registration = await api.registerManually(interaction.user.id, {
       subject_discord_id: discordId,
       game,
