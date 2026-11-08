@@ -187,6 +187,7 @@ class SessionWatch {
       await staffLog.post(watch.interaction.client, [staffLog.error(watch.member.id, 'check a Steam sign-in', detail)]);
       return notice('failed', `We couldn't check your sign-in. Staff have been told.${ref}`);
     }
+    await staffLog.post(watch.interaction.client, [staffLog.refused(watch.member.id, watch.game, state)]);
     return notice('refused', `${failure.message}${ref}`);
   }
 }

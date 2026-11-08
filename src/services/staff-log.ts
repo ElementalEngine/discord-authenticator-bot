@@ -1,6 +1,6 @@
 import type { Client } from 'discord.js';
 
-import type { Registration, RoleIntent, Standing } from '../api/types.js';
+import type { Game, Registration, RoleIntent, SessionState, Standing } from '../api/types.js';
 import { GAME_NAMES } from '../config/constants.js';
 import { config } from '../config/index.js';
 import { account, role, standing as standingParts, who } from '../ui/format.js';
@@ -81,6 +81,15 @@ export function clash(userId: string, code: string, details: Clash, banned: bool
   }
   parts.push(code);
   return { text: parts.join(DOT), pingModerators: severe };
+}
+
+// A sign-in core-api's checks turned away, such as a private profile or too
+// little playtime, with the Steam account it was for.
+export function refused(userId: string, game: Game, state: SessionState): Entry {
+  const parts = [`[REFUSED] ${who(userId)}`, GAME_NAMES[game]];
+  if (state.linked_account_id) parts.push(account('steam', state.linked_account_id, state.linked_account_name));
+  if (state.failure) parts.push(state.failure.code, state.failure.message);
+  return { text: parts.join(DOT), pingModerators: false };
 }
 
 export function error(userId: string, action: string, detail: string): Entry {
