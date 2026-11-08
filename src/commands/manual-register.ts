@@ -2,7 +2,7 @@ import { DiscordAPIError, InteractionContextType, RESTJSONErrorCodes, SlashComma
 
 import { api } from '../api/client.js';
 import type { ManualPlatform } from '../api/types.js';
-import { failed, settle } from '../flows/outcome.js';
+import { failed, settle, written } from '../flows/outcome.js';
 import { refuse } from '../ui/failure.js';
 import * as panels from '../ui/panels.js';
 import { defer, show } from '../ui/reply.js';
@@ -49,7 +49,7 @@ export async function run(interaction: ChatInputCommandInteraction<'cached'>): P
       if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownMember) return refuse('That player is not in this server.');
       throw error;
     });
-    const registration = await api.registerManually(interaction.user.id, {
+    const write = api.registerManually(interaction.user.id, {
       subject_discord_id: discordId,
       game,
       platform,
@@ -59,6 +59,7 @@ export async function run(interaction: ChatInputCommandInteraction<'cached'>): P
       discord_display_name: member.displayName,
       reason,
     });
+    const registration = await written(interaction.guild, discordId, 'register a player by hand', write, false);
     const sync = await settle(interaction.guild, member, registration, 'staff', { id: interaction.user.id, reason });
     await show(interaction, panels.registeredBy(registration, sync));
   } catch (error) {

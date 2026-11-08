@@ -1,14 +1,23 @@
-import { client } from './client.js';
+import { setTimeout as wait } from 'node:timers/promises';
+
+import { client, drained } from './client.js';
 import { config } from './config/index.js';
 import { watch } from './flows/steam.js';
 import { log } from './utils/log.js';
 
-// A shutdown ends every sign-in watch, so nothing runs after the client goes.
+// A registration in hand can wait out two core-api attempts, then set roles and log.
+const DRAIN_MS = 2 * config.backend.timeoutMs + 10_000;
+
+// A shutdown ends every sign-in watch and lets the interactions in hand finish,
+// so nothing runs after the client goes.
 async function shutdown(signal: string): Promise<void> {
   log.info(`${signal}: shutting down`);
-  await watch.stopAll();
-  await client.destroy();
-  process.exit(0);
+  try {
+    await Promise.race([Promise.all([watch.stopAll(), drained()]), wait(DRAIN_MS, undefined, { ref: false })]);
+    await client.destroy();
+  } finally {
+    process.exit(0);
+  }
 }
 
 process.once('SIGINT', () => void shutdown('SIGINT'));

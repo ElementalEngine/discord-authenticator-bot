@@ -4,7 +4,7 @@ import { ApiError } from '../api/errors.js';
 import type { Registration } from '../api/types.js';
 import { syncRoles, type RoleSync } from '../services/roles.js';
 import * as staffLog from '../services/staff-log.js';
-import { failureOf } from '../ui/failure.js';
+import { failureOf, unanswered } from '../ui/failure.js';
 import { notice, type Panel } from '../ui/kit.js';
 import { log } from '../utils/log.js';
 
@@ -21,6 +21,22 @@ export async function settle(
   const sync = await syncRoles(member, registration.role_intents);
   await staffLog.post(guild.client, staffLog.registered(registration, via, sync.failed, staff));
   return sync;
+}
+
+// A registration write core-api never answered may have landed, and a retry would then
+// be refused as already registered; a player the gate let in whom core-api has registered
+// is the same mismatch. Either way staff check, as no role was set.
+export async function written<T>(guild: Guild, userId: string, action: string, write: Promise<T>, gated: boolean): Promise<T> {
+  try {
+    return await write;
+  } catch (error) {
+    const lost = unanswered(error);
+    if (lost || (gated && error instanceof ApiError && error.code === 'ALREADY_REGISTERED')) {
+      const why = lost ? 'core-api did not answer, so it may be recorded' : 'core-api has them registered, yet they still wear the non-verified role';
+      await staffLog.post(guild.client, [staffLog.error(userId, action, `${why}; check /lookup and their roles`)]);
+    }
+    throw error;
+  }
 }
 
 // Whether a user is banned from the server, or null when the bot may not read bans.

@@ -61,9 +61,9 @@ test('a registration logs one tagged line, plus young-account and role-failure l
   assert.equal(log.registered({ ...registration, flags: [] }, 'steam', []).length, 1);
 });
 
-test('a clash on the player\'s own account names no one else and pings no one', () => {
+test('a clash on the player\'s own account names the account they hold, no one else, and pings no one', () => {
   const entry = log.clash(player, 'LINKED_ACCOUNT_CONFLICT', { existing_discord_id: player, platform: '2k', account_id: 'abc', standing: standing({ suspended: true }) }, true);
   assert.equal(entry.pingModerators, false);
-  assert.match(entry.text, /already linked to a different account/);
-  assert.doesNotMatch(entry.text, /is held by/);
+  assert.match(entry.text, /already linked to .*abc/);
+  assert.doesNotMatch(entry.text, /is held by|a different account/);
 });

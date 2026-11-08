@@ -72,7 +72,11 @@ export function clash(userId: string, code: string, details: Clash, banned: bool
     if (banned) parts.push('banned from the server');
     if (banned === null) parts.push('server ban unknown (no Ban Members permission)');
   } else {
-    const held = details.existing_steam_id ? account('steam', details.existing_steam_id) : 'a different account';
+    const held = details.existing_steam_id
+      ? account('steam', details.existing_steam_id)
+      : details.account_id
+        ? account(details.platform, details.account_id)
+        : 'a different account';
     parts.push(`this Discord account is already linked to ${held}`);
   }
   parts.push(code);

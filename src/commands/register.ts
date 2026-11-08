@@ -12,7 +12,7 @@ import {
 
 import { api } from '../api/client.js';
 import { IDS } from '../config/constants.js';
-import { settle } from '../flows/outcome.js';
+import { settle, written } from '../flows/outcome.js';
 import { watch } from '../flows/steam.js';
 import { refuse } from '../ui/failure.js';
 import { notice } from '../ui/kit.js';
@@ -40,7 +40,7 @@ export async function run(interaction: ChatInputCommandInteraction<'cached'>): P
   if (sub === 'civ7') return show(interaction, panels.chooseCiv7);
   await defer(interaction);
   if (sub === 'civ6') return watch.start(interaction, interaction.member, 'civ6');
-  const registration = await api.rankRole(interaction.user.id, gameOption(interaction));
+  const registration = await written(interaction.guild, interaction.user.id, 'add a rank role', api.rankRole(interaction.user.id, gameOption(interaction)), true);
   const sync = await settle(interaction.guild, interaction.member, registration, 'rank role');
   await show(interaction, panels.rankRole(registration, sync));
 }
@@ -84,13 +84,19 @@ export async function submit(interaction: ModalSubmitInteraction<'cached'>): Pro
   const accountName = interaction.fields.getTextInputValue(IDS.twoKAccountName).trim() || null;
   if (!accountId) refuse('Enter your 2K account id.');
   await hold(interaction);
-  const registration = await api.registerTwoK({
-    discord_user_id: interaction.user.id,
-    platform_account_id: accountId,
-    platform_account_name: accountName,
-    discord_username: interaction.user.username,
-    discord_display_name: interaction.member.displayName,
-  });
+  const registration = await written(
+    interaction.guild,
+    interaction.user.id,
+    'register with 2K',
+    api.registerTwoK({
+      discord_user_id: interaction.user.id,
+      platform_account_id: accountId,
+      platform_account_name: accountName,
+      discord_username: interaction.user.username,
+      discord_display_name: interaction.member.displayName,
+    }),
+    true,
+  );
   const sync = await settle(interaction.guild, interaction.member, registration, '2k');
   await show(interaction, panels.registered(registration, sync));
 }

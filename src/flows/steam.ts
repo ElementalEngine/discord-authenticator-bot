@@ -42,15 +42,18 @@ class SessionWatch {
   async start(interaction: Started, member: GuildMember, game: Game): Promise<void> {
     const session = await this.api.startSession(member.id, game);
     if (this.stopping) return show(interaction, panels.restarting);
+    const endsAt = Math.min(Date.parse(session.expires_at), interaction.createdTimestamp + ANSWER_LIFE_MS);
+    const signIn = panels.signIn(game, session.authorize_url, session.session_id, endsAt);
     const older = this.watches.get(member.id);
     this.end(member.id);
     // Saved before any await, so a second start at the same moment replaces this one cleanly.
-    const endsAt = Math.min(Date.parse(session.expires_at), interaction.createdTimestamp + ANSWER_LIFE_MS);
     const watch: Watch = { interaction, member, game, sessionId: session.session_id, endsAt, checking: false, asked: false };
     this.watches.set(member.id, watch);
-    if (older) await show(older.interaction, notice('info', 'You started another sign-in. Use the newest message.'));
+    // A registration core-api was asked for and never answered is not dropped unseen.
+    if (older?.asked) await this.unknown(older);
+    else if (older) await show(older.interaction, notice('info', 'You started another sign-in. Use the newest message.'));
     if (!this.live(watch)) return;
-    await show(interaction, panels.signIn(game, session.authorize_url, session.session_id, endsAt));
+    await show(interaction, signIn);
     if (this.live(watch)) this.next(watch);
   }
 
@@ -123,7 +126,8 @@ class SessionWatch {
       case 'validating':
         if (!watch.checking) await show(watch.interaction, panels.checking(watch.game));
         watch.checking = true;
-        return this.next(watch);
+        // A cancel or a newer sign-in during that edit ended this watch.
+        return this.live(watch) ? this.next(watch) : undefined;
       case 'validated':
       case 'completed':
         return this.complete(watch);

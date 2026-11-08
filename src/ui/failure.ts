@@ -28,15 +28,18 @@ const NO_ANSWER = "The league server didn't answer. Try again in a minute.";
 const unreachable = (error: unknown): boolean =>
   error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError' || (error instanceof TypeError && error.message === 'fetch failed'));
 
+// No answer, or a server error with none of core-api's detail: a write may have landed.
+export const unanswered = (error: unknown): boolean => unreachable(error) || (error instanceof ApiError && !error.error && error.status >= 500);
+
 // What a player or staff member reads when something did not happen. core-api's
 // refusals are written for players; its auth and validation failures are not.
 export function failureOf(error: unknown): Failure {
   if (error instanceof Refusal) return { tone: 'refused', text: error.message, staff: false };
-  if (unreachable(error)) return { tone: 'failed', text: NO_ANSWER, staff: false };
+  if (unanswered(error)) return { tone: 'failed', text: NO_ANSWER, staff: false };
   if (error instanceof ApiError) {
     const detail = error.error;
     const ref = detail?.correlation_id ? ` (ref ${detail.correlation_id})` : '';
-    if (!detail) return error.status >= 500 ? { tone: 'failed', text: NO_ANSWER, staff: false } : { tone: 'failed', text: OURS, staff: true };
+    if (!detail) return { tone: 'failed', text: OURS, staff: true };
     if (error.status === 401 || error.status === 403 || error.status === 422 || detail.code.endsWith('MISCONFIGURED')) {
       return { tone: 'failed', text: `${OURS}${ref}`, staff: true };
     }
