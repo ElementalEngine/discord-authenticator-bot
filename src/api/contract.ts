@@ -24,178 +24,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/infractions/active": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Active Suspensions */
-        get: operations["get_active_suspensions_api_v1_infractions_active_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/infractions/overdue": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Overdue Suspensions */
-        get: operations["get_overdue_suspensions_api_v1_infractions_overdue_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/infractions/{discord_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Record */
-        get: operations["get_record_api_v1_infractions__discord_id__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/infractions/{discord_id}/add-days": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Add Days */
-        post: operations["add_days_api_v1_infractions__discord_id__add_days_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/infractions/{discord_id}/flat/{flat_type}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Record Flat Suspension */
-        post: operations["record_flat_suspension_api_v1_infractions__discord_id__flat__flat_type__post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/infractions/{discord_id}/pending": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Pending Suspension */
-        get: operations["get_pending_suspension_api_v1_infractions__discord_id__pending_get"];
-        put?: never;
-        /** Create Pending Suspension */
-        post: operations["create_pending_suspension_api_v1_infractions__discord_id__pending_post"];
-        /** Delete Pending Suspension */
-        delete: operations["delete_pending_suspension_api_v1_infractions__discord_id__pending_delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/infractions/{discord_id}/remove-days": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Remove Days */
-        post: operations["remove_days_api_v1_infractions__discord_id__remove_days_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/infractions/{discord_id}/remove-tier": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Remove Tier */
-        post: operations["remove_tier_api_v1_infractions__discord_id__remove_tier_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/infractions/{discord_id}/tier/{category}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Record Tier Infraction */
-        post: operations["record_tier_infraction_api_v1_infractions__discord_id__tier__category__post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/infractions/{discord_id}/unsuspend": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Unsuspend */
-        post: operations["unsuspend_api_v1_infractions__discord_id__unsuspend_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v2/auth/2k-registrations": {
         parameters: {
             query?: never;
@@ -349,6 +177,227 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v2/infractions/due": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Due */
+        get: operations["due_api_v2_infractions_due_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/infractions/laggers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Laggers */
+        get: operations["laggers_api_v2_infractions_laggers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/infractions/suspended": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Suspended */
+        get: operations["suspended_api_v2_infractions_suspended_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/infractions/tiers/{category}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tier Members */
+        get: operations["tier_members_api_v2_infractions_tiers__category__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/infractions/{discord_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Record */
+        get: operations["record_api_v2_infractions__discord_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/infractions/{discord_id}/days": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Change Days */
+        post: operations["change_days_api_v2_infractions__discord_id__days_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/infractions/{discord_id}/expire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Expire */
+        post: operations["expire_api_v2_infractions__discord_id__expire_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/infractions/{discord_id}/flat/{flat_type}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record Flat */
+        post: operations["record_flat_api_v2_infractions__discord_id__flat__flat_type__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/infractions/{discord_id}/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Pending */
+        put: operations["set_pending_api_v2_infractions__discord_id__pending_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/infractions/{discord_id}/pending/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply Pending */
+        post: operations["apply_pending_api_v2_infractions__discord_id__pending_apply_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/infractions/{discord_id}/remove-tier": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Remove Tier */
+        post: operations["remove_tier_api_v2_infractions__discord_id__remove_tier_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/infractions/{discord_id}/tier/{category}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record Tier */
+        post: operations["record_tier_api_v2_infractions__discord_id__tier__category__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v2/infractions/{discord_id}/unsuspend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Unsuspend */
+        post: operations["unsuspend_api_v2_infractions__discord_id__unsuspend_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/match-setups/draft": {
         parameters: {
             query?: never;
@@ -379,7 +428,7 @@ export interface paths {
         /**
          * Open Lobbies
          * @description The lobbies players can see; with a host, that host's own, in setup or
-         *     not.
+         *     not; with recent, also those closed in the last day.
          */
         get: operations["open_lobbies_api_v2_match_setups_lobbies_get"];
         put?: never;
@@ -444,8 +493,7 @@ export interface paths {
         };
         /**
          * Lobbies Due
-         * @description Countdowns, votes and blind picks past their time, for the bot to move
-         *     on.
+         * @description Votes and blind picks past their time, for the bot to move on.
          */
         get: operations["lobbies_due_api_v2_match_setups_lobbies_due_get"];
         put?: never;
@@ -542,7 +590,7 @@ export interface paths {
         put?: never;
         /**
          * Join Lobby
-         * @description A player sits down; the last seat starts the countdown to the vote.
+         * @description A player sits down; a full lobby waits for its host to start it.
          */
         post: operations["join_lobby_api_v2_match_setups_lobbies__lobby_id__join_post"];
         delete?: never;
@@ -640,8 +688,7 @@ export interface paths {
         put?: never;
         /**
          * Start Lobby
-         * @description The host starts, or the bot once a full lobby's countdown ends: the
-         *     seats lock and the bans vote opens.
+         * @description The host starts: the seats lock and the bans vote opens.
          */
         post: operations["start_lobby_api_v2_match_setups_lobbies__lobby_id__start_post"];
         delete?: never;
@@ -662,7 +709,8 @@ export interface paths {
         /**
          * Tally Vote
          * @description Settle the settings put to the vote, count the bans and deal the draft.
-         *     The bot counts, acting as the host, once all finish or the time is up.
+         *     The bot counts, acting as the host, once all finish or the time is up; a
+         *     vote not every player finished is cancelled.
          */
         post: operations["tally_vote_api_v2_match_setups_lobbies__lobby_id__tally_post"];
         delete?: never;
@@ -900,7 +948,8 @@ export interface paths {
         /**
          * Tally Vote
          * @description Count the settings, the draft mode and the bans, and deal the draft. The
-         *     bot counts, acting as the host, once all finish or the time is up.
+         *     bot counts, acting as the host, once all finish or the time is up; a vote
+         *     not every player finished is cancelled.
          */
         post: operations["tally_vote_api_v2_match_setups_votes__vote_id__tally_post"];
         delete?: never;
@@ -1307,16 +1356,6 @@ export interface components {
             registrations: components["schemas"]["RegistrationEntry"][];
             standing?: components["schemas"]["Standing"] | null;
         };
-        /** ActiveSuspension */
-        ActiveSuspension: {
-            /** Discord Id */
-            discord_id: string;
-            /**
-             * Ends
-             * Format: date-time
-             */
-            ends: string;
-        };
         /** AffectedPlayerRating */
         AffectedPlayerRating: {
             /** Discord Id */
@@ -1360,10 +1399,7 @@ export interface components {
         Body_upload_match_api_v2_matches_post: {
             /** Discord Message Id */
             discord_message_id: string;
-            /**
-             * File
-             * Format: binary
-             */
+            /** File */
             file: string;
             /** Is Cloud */
             is_cloud: string;
@@ -1425,12 +1461,24 @@ export interface components {
             /** Reason */
             reason: string;
         };
-        /** CreatePendingSuspensionRequest */
-        CreatePendingSuspensionRequest: {
-            /** Punishment Type */
-            punishment_type: string;
-            /** Reason */
-            reason?: string | null;
+        /** DaysBody */
+        DaysBody: {
+            /** Days */
+            days: number;
+        };
+        /** DaysResult */
+        DaysResult: {
+            /** Days */
+            days: number;
+            /** Discord Id */
+            discord_id: string;
+            /**
+             * Ends
+             * Format: date-time
+             */
+            ends: string;
+            /** Suspended */
+            suspended: boolean;
         };
         /** DealtBans */
         DealtBans: {
@@ -1482,6 +1530,13 @@ export interface components {
             /** Starting Age */
             starting_age?: ("AGE_ANTIQUITY" | "AGE_EXPLORATION" | "AGE_MODERN") | null;
         };
+        /** DueSuspensions */
+        DueSuspensions: {
+            /** Discord Ids */
+            discord_ids: string[];
+            /** Next Ends */
+            next_ends: string | null;
+        };
         /** ErrorDetail */
         ErrorDetail: {
             /** Code */
@@ -1495,8 +1550,8 @@ export interface components {
             /** Retryable */
             retryable?: boolean | null;
         };
-        /** FlatSuspensionResponse */
-        FlatSuspensionResponse: {
+        /** FlatResult */
+        FlatResult: {
             /** Days Added */
             days_added: number;
             /** Discord Id */
@@ -1506,8 +1561,6 @@ export interface components {
              * Format: date-time
              */
             ends: string;
-            /** Suspended */
-            suspended: boolean;
             type: components["schemas"]["FlatType"];
         };
         /**
@@ -1581,6 +1634,27 @@ export interface components {
         HistoryPost: {
             /** Message Id */
             message_id: string;
+        };
+        /** InfractionBody */
+        InfractionBody: {
+            /** Reason */
+            reason?: string | null;
+            /** Suspended Roles */
+            suspended_roles?: string[];
+        };
+        /** Lagger */
+        Lagger: {
+            /** Discord Id */
+            discord_id: string;
+            /** Strikes */
+            strikes: number;
+            /** Tagged */
+            tagged: boolean;
+        };
+        /** Laggers */
+        Laggers: {
+            /** Members */
+            members: components["schemas"]["Lagger"][];
         };
         /**
          * LeaderPick
@@ -1727,6 +1801,8 @@ export interface components {
             cancel_reason: string | null;
             /** Channel Id */
             channel_id: string;
+            /** Closed At */
+            closed_at?: string | null;
             /** Code */
             code: string;
             /** Deadline */
@@ -1770,6 +1846,8 @@ export interface components {
              * @enum {string}
              */
             shape: "ffa-8" | "ffa-10" | "ffa-12" | "ffa-14" | "duel" | "teamer-2v2" | "teamer-3v3" | "teamer-4v4" | "teamer-5v5" | "teamer-2v2v2" | "teamer-2v2v2v2";
+            /** Started At */
+            started_at?: string | null;
             /**
              * Status
              * @enum {string}
@@ -1881,32 +1959,32 @@ export interface components {
             season_label?: string | null;
             /** Turn */
             turn: number;
+            /** Updated At */
+            updated_at?: string | null;
         };
-        /** ModifyDaysRequest */
-        ModifyDaysRequest: {
-            /** Days */
-            days: number;
-        };
-        /** ModifyDaysResponse */
-        ModifyDaysResponse: {
-            /** Days Delta */
-            days_delta: number;
+        /** PendingApplied */
+        PendingApplied: {
+            /** Applied */
+            applied: boolean;
             /** Discord Id */
             discord_id: string;
-            /**
-             * New Ends
-             * Format: date-time
-             */
-            new_ends: string;
-        };
-        /** PendingSuspensionResponse */
-        PendingSuspensionResponse: {
-            /** Discord Id */
-            discord_id: string;
+            /** Ends */
+            ends: string | null;
+            /** Held */
+            held: boolean;
+            /** Lagger Tagged */
+            lagger_tagged: boolean;
             /** Punishment Type */
-            punishment_type: string;
+            punishment_type: string | null;
             /** Reason */
             reason: string | null;
+        };
+        /** PendingBody */
+        PendingBody: {
+            /** Punishment Type */
+            punishment_type: components["schemas"]["TierCategory"] | components["schemas"]["FlatType"];
+            /** Reason */
+            reason?: string | null;
         };
         /** PlayerLeaderboard */
         PlayerLeaderboard: {
@@ -1974,19 +2052,10 @@ export interface components {
             discord_user_id: string;
             game: components["schemas"]["SupportedGame"];
         };
-        /** RecordFlatSuspensionRequest */
-        RecordFlatSuspensionRequest: {
+        /** ReasonBody */
+        ReasonBody: {
             /** Reason */
             reason?: string | null;
-            /** Suspended Roles */
-            suspended_roles?: string[];
-        };
-        /** RecordTierInfractionRequest */
-        RecordTierInfractionRequest: {
-            /** Reason */
-            reason?: string | null;
-            /** Suspended Roles */
-            suspended_roles?: string[];
         };
         /** Registration */
         Registration: {
@@ -2035,21 +2104,9 @@ export interface components {
          * @enum {string}
          */
         RegistrationPlatform: "steam" | "epic" | "2k" | "xbox";
-        /** RemoveTierRequest */
-        RemoveTierRequest: {
+        /** RemoveTierBody */
+        RemoveTierBody: {
             category: components["schemas"]["TierCategory"];
-        };
-        /** RemoveTierResponse */
-        RemoveTierResponse: {
-            category: components["schemas"]["TierCategory"];
-            /** Discord Id */
-            discord_id: string;
-            /** New Decays */
-            new_decays: string | null;
-            /** New Tier */
-            new_tier: number;
-            /** Was Changed */
-            was_changed: boolean;
         };
         /**
          * ResetStatsResponseV2
@@ -2077,6 +2134,11 @@ export interface components {
          * @enum {string}
          */
         RoleIntent: "grant_civ6_rank" | "grant_civ7_rank" | "grant_novice" | "grant_server_news" | "grant_civ6_news" | "grant_civ7_news" | "grant_pc_steam" | "grant_2k_crossplatform" | "remove_non_verified";
+        /** RolesBody */
+        RolesBody: {
+            /** Suspended Roles */
+            suspended_roles?: string[];
+        };
         /**
          * SeasonPreview
          * @description The open season, what comes next, and the season records per collection
@@ -2220,6 +2282,11 @@ export interface components {
             id: string;
             /** Options */
             options: components["schemas"]["SettingOption"][];
+            /**
+             * Standard Draft Only
+             * @default false
+             */
+            standard_draft_only: boolean;
             /** Title */
             title: string;
         };
@@ -2324,18 +2391,48 @@ export interface components {
          * @enum {string}
          */
         SupportedGame: "civ6" | "civ7";
-        /** SuspensionRecordResponse */
-        SuspensionRecordResponse: {
-            /** Active Category */
-            active_category: components["schemas"]["TierCategory"] | "flat" | null;
+        /** Suspended */
+        Suspended: {
+            /** Discord Ids */
+            discord_ids: string[];
+        };
+        /**
+         * SuspensionCleared
+         * @description A suspension ended, with the roles the bot should give back; `suspended`
+         *     is the record after the call, so a repeat can tell it ended or never did.
+         */
+        SuspensionCleared: {
+            /** Cleared */
+            cleared: boolean;
             /** Discord Id */
             discord_id: string;
-            /** Ends */
-            ends: string | null;
             /** Suspended */
             suspended: boolean;
             /** Suspended Roles */
             suspended_roles: string[];
+        };
+        /**
+         * SuspensionRecord
+         * @description A member's record read as the next write would see it, nothing written;
+         *     a member without one reads as a zero record.
+         */
+        SuspensionRecord: {
+            /** Active Category */
+            active_category: string | null;
+            /** Discord Id */
+            discord_id: string;
+            /** Ends */
+            ends: string | null;
+            /** Held */
+            held: boolean;
+            /** Lagger Tagged */
+            lagger_tagged: boolean;
+            /** Suspended */
+            suspended: boolean;
+            /** Tiers */
+            tiers: {
+                [key: string]: number;
+            };
         };
         /** TeamGenResponse */
         TeamGenResponse: {
@@ -2352,10 +2449,33 @@ export interface components {
          * TierCategory
          * @enum {string}
          */
-        TierCategory: "quit" | "minor" | "moderate" | "major" | "extreme";
-        /** TierInfractionResponse */
-        TierInfractionResponse: {
-            active_category: components["schemas"]["TierCategory"] | null;
+        TierCategory: "quit" | "minor" | "moderate" | "major" | "extreme" | "lagger";
+        /** TierMember */
+        TierMember: {
+            /** Discord Id */
+            discord_id: string;
+            /** Held */
+            held: boolean;
+            /** Tier */
+            tier: number;
+        };
+        /** TierMembers */
+        TierMembers: {
+            /** Members */
+            members: components["schemas"]["TierMember"][];
+        };
+        /** TierRemoved */
+        TierRemoved: {
+            category: components["schemas"]["TierCategory"];
+            /** Discord Id */
+            discord_id: string;
+            /** Tier */
+            tier: number;
+            /** Was Changed */
+            was_changed: boolean;
+        };
+        /** TierResult */
+        TierResult: {
             category: components["schemas"]["TierCategory"];
             /** Days Added */
             days_added: number;
@@ -2363,6 +2483,8 @@ export interface components {
             discord_id: string;
             /** Ends */
             ends: string | null;
+            /** Held */
+            held: boolean;
             /** Is Ban Threshold */
             is_ban_threshold: boolean;
             /** Is Warning Only */
@@ -2445,6 +2567,8 @@ export interface components {
             season_label?: string | null;
             /** Turn */
             turn: number;
+            /** Updated At */
+            updated_at?: string | null;
         };
         /** UserStatsResponseV2 */
         UserStatsResponseV2: {
@@ -2461,6 +2585,10 @@ export interface components {
         };
         /** ValidationError */
         ValidationError: {
+            /** Context */
+            ctx?: Record<string, never>;
+            /** Input */
+            input?: unknown;
             /** Location */
             loc: (string | number)[];
             /** Message */
@@ -2624,420 +2752,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
-                };
-            };
-        };
-    };
-    get_active_suspensions_api_v1_infractions_active_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ActiveSuspension"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_overdue_suspensions_api_v1_infractions_overdue_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ActiveSuspension"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_record_api_v1_infractions__discord_id__get: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path: {
-                discord_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SuspensionRecordResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    add_days_api_v1_infractions__discord_id__add_days_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path: {
-                discord_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ModifyDaysRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ModifyDaysResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    record_flat_suspension_api_v1_infractions__discord_id__flat__flat_type__post: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path: {
-                discord_id: string;
-                flat_type: components["schemas"]["FlatType"];
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RecordFlatSuspensionRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["FlatSuspensionResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_pending_suspension_api_v1_infractions__discord_id__pending_get: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path: {
-                discord_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PendingSuspensionResponse"] | null;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_pending_suspension_api_v1_infractions__discord_id__pending_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path: {
-                discord_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreatePendingSuspensionRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    delete_pending_suspension_api_v1_infractions__discord_id__pending_delete: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path: {
-                discord_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    remove_days_api_v1_infractions__discord_id__remove_days_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path: {
-                discord_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ModifyDaysRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ModifyDaysResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    remove_tier_api_v1_infractions__discord_id__remove_tier_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path: {
-                discord_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RemoveTierRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["RemoveTierResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    record_tier_infraction_api_v1_infractions__discord_id__tier__category__post: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path: {
-                discord_id: string;
-                category: components["schemas"]["TierCategory"];
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RecordTierInfractionRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TierInfractionResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    unsuspend_api_v1_infractions__discord_id__unsuspend_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                authorization?: string | null;
-            };
-            path: {
-                discord_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -3353,6 +3067,463 @@ export interface operations {
             };
         };
     };
+    due_api_v2_infractions_due_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DueSuspensions"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    laggers_api_v2_infractions_laggers_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Laggers"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    suspended_api_v2_infractions_suspended_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Suspended"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tier_members_api_v2_infractions_tiers__category__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                category: "quit" | "minor" | "moderate" | "major" | "extreme";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TierMembers"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_api_v2_infractions__discord_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                discord_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuspensionRecord"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_days_api_v2_infractions__discord_id__days_post: {
+        parameters: {
+            query?: never;
+            header: {
+                authorization?: string | null;
+                "x-actor-discord-id": string;
+            };
+            path: {
+                discord_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DaysBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DaysResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    expire_api_v2_infractions__discord_id__expire_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                discord_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuspensionCleared"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_flat_api_v2_infractions__discord_id__flat__flat_type__post: {
+        parameters: {
+            query?: never;
+            header: {
+                authorization?: string | null;
+                "x-actor-discord-id": string;
+            };
+            path: {
+                discord_id: string;
+                flat_type: components["schemas"]["FlatType"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InfractionBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FlatResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_pending_api_v2_infractions__discord_id__pending_put: {
+        parameters: {
+            query?: never;
+            header: {
+                authorization?: string | null;
+                "x-actor-discord-id": string;
+            };
+            path: {
+                discord_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PendingBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    apply_pending_api_v2_infractions__discord_id__pending_apply_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                discord_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RolesBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PendingApplied"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_tier_api_v2_infractions__discord_id__remove_tier_post: {
+        parameters: {
+            query?: never;
+            header: {
+                authorization?: string | null;
+                "x-actor-discord-id": string;
+            };
+            path: {
+                discord_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RemoveTierBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TierRemoved"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_tier_api_v2_infractions__discord_id__tier__category__post: {
+        parameters: {
+            query?: never;
+            header: {
+                authorization?: string | null;
+                "x-actor-discord-id": string;
+            };
+            path: {
+                discord_id: string;
+                category: components["schemas"]["TierCategory"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InfractionBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TierResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unsuspend_api_v2_infractions__discord_id__unsuspend_post: {
+        parameters: {
+            query?: never;
+            header: {
+                authorization?: string | null;
+                "x-actor-discord-id": string;
+            };
+            path: {
+                discord_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ReasonBody"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuspensionCleared"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     deal_draft_and_record_api_v2_match_setups_draft_post: {
         parameters: {
             query?: never;
@@ -3393,6 +3564,7 @@ export interface operations {
             query: {
                 guild_id: string;
                 host_id?: string | null;
+                recent?: boolean;
             };
             header?: {
                 authorization?: string | null;
