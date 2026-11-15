@@ -3,7 +3,7 @@ import { ButtonBuilder, ButtonStyle } from 'discord.js';
 import type { AccountLookup, AccountRecord, Game, Registration } from '../api/types.js';
 import { GAME_NAMES, IDS } from '../config/constants.js';
 import type { RoleSync } from '../services/roles.js';
-import { account, granted, role, standing, when } from './format.js';
+import { account, granted, role, standing, when, who } from './format.js';
 import { notice, type Panel } from './kit.js';
 
 // The sign-in's Cancel names its session, so an old message cannot stop a newer sign-in.
@@ -67,7 +67,7 @@ export const registeredBy = (registration: Registration, sync: RoleSync): Panel 
   tone: toneOf(sync),
   title: `Registered for ${GAME_NAMES[registration.game]}`,
   lines: [
-    `Player: <@${registration.discord_user_id}>`,
+    `Player: ${who(registration.discord_user_id)}`,
     `Account: ${account(registration.linked_platform, registration.linked_account_id, registration.linked_account_name)}`,
     ...roleLines(sync, true),
   ],
@@ -75,12 +75,12 @@ export const registeredBy = (registration: Registration, sync: RoleSync): Panel 
 
 function recordLines(record: AccountRecord): string[] {
   const name = record.discord_display_name ?? record.discord_username;
-  const lines = [`### <@${record.discord_id}> \`${record.discord_id}\`${name ? ` (${name})` : ''}`];
+  const lines = [`### ${who(record.discord_id)}${name ? ` (${name})` : ''}`];
   if (record.linked_account_id) lines.push(`Account: ${account(record.linked_platform, record.linked_account_id, record.linked_account_name)}`);
   for (const entry of record.registrations) {
     const parts = [`${GAME_NAMES[entry.game]}: ${entry.method ?? 'unknown method'}`];
     if (entry.registered_at) parts.push(when(entry.registered_at, 'D'));
-    if (entry.actor_discord_id) parts.push(`by <@${entry.actor_discord_id}>`);
+    if (entry.actor_discord_id) parts.push(`by ${who(entry.actor_discord_id)}`);
     if (entry.reason) parts.push(`"${entry.reason}"`);
     if (entry.flags.length) parts.push(entry.flags.join(', '));
     lines.push(`- ${parts.join(' · ')}`);
